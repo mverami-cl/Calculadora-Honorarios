@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Calculadora de Honorarios — Chile</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #F5F2EC;
+    --surface: #FDFCF9;
+    --border: #E2DDD5;
+    --text: #1A1814;
+    --muted: #7A7468;
+    --accent: #1A3A2A;
+    --accent-light: #E8F0EB;
+    --danger: #8B2020;
+    --danger-light: #FDF0F0;
+    --warning: #7A4F00;
+    --warning-light: #FDF5E6;
+    --success: #1A4A2A;
+    --success-light: #EBF4EE;
+    --info: #1A2A4A;
+    --info-light: #EBF0F8;
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  header {
+    background: var(--accent);
+    color: #F5F2EC;
+    padding: 2.5rem 1.5rem 2rem;
+    text-align: center;
+  }
+
+  header h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 2rem;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.4rem;
+  }
+
+  header p {
+    font-size: 14px;
+    opacity: 0.7;
+    font-weight: 300;
+  }
+
+  .container {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 1.5rem 1rem 4rem;
+  }
+
+  .tabs {
+    display: flex;
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 4px;
+    margin: 1.5rem 0 1.25rem;
+    gap: 2px;
+  }
+
+  .tab {
+    flex: 1;
+    padding: 8px 12px;
+    border: none;
+    background: none;
+    border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .tab.active {
+    background: var(--accent);
+    color: #F5F2EC;
+    font-weight: 500;
+  }
+
+  .tab:not(.active):hover { background: var(--bg); color: var(--text); }
+
+  .tab-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.5;
+  }
+
+  .tab.active .tab-dot { opacity: 1; background: #A8C5B0; }
+
+  .card {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+  }
+
+  .card-label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 1rem;
+  }
+
+  .boleta-header {
+    display: grid;
+    grid-template-columns: 1fr 130px 120px 28px;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+
+  .boleta-header span {
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 500;
+    letter-spacing: 0.04em;
+  }
+
+  .boleta-row {
+    display: grid;
+    grid-template-columns: 1fr 130px 120px 28px;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 7px;
+  }
+
+  input[type="text"], input[type="number"], select {
+    width: 100%;
+    padding: 7px 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: var(--text);
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    outline: none;
+    transition: border-color 0.15s;
+    -webkit-appearance: none;
+  }
+
+  input:focus, select:focus { border-color: var(--accent); }
+
+  select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%237A7468' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; padding-right: 26px; cursor: pointer; }
+
+  .del-btn {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    padding: 0;
+    transition: color 0.15s;
+  }
+  .del-btn:hover { color: var(--danger); }
+
+  .add-btn {
+    width: 100%;
+    padding: 8px;
+    background: none;
+    border: 0.5px dashed var(--border);
+    border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: var(--muted);
+    cursor: pointer;
+    margin-top: 6px;
+    transition: all 0.15s;
+  }
+  .add-btn:hover { background: var(--bg); border-color: var(--accent); color: var(--accent); }
+
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 1rem;
+  }
+
+  .metric {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.9rem 1rem;
+  }
+
+  .metric-label { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+  .metric-value { font-size: 18px; font-weight: 500; color: var(--text); }
+  .metric-value.danger { color: var(--danger); }
+  .metric-value.success { color: var(--success); }
+  .metric-value.warning { color: var(--warning); }
+
+  .proj-row {
+    display: grid;
+    grid-template-columns: 90px 1fr 100px;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .proj-label { font-size: 13px; color: var(--muted); }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--border);
+    outline: none;
+    border: none;
+    padding: 0;
+    background: linear-gradient(to right, var(--accent) 0%, var(--accent) var(--pct, 0%), var(--border) var(--pct, 0%));
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: 2px solid var(--surface);
+    box-shadow: 0 0 0 1px var(--accent);
+  }
+
+  input[type="range"]::-moz-range-thumb {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: 2px solid var(--surface);
+  }
+
+  .proj-val { font-size: 13px; font-weight: 500; text-align: right; color: var(--text); }
+
+  .apv-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+
+  .apv-row label { font-size: 13px; color: var(--text); flex: 1; }
+  .apv-row input { width: 150px; flex-shrink: 0; }
+
+  .apv-note { font-size: 12px; color: var(--muted); margin-top: 6px; }
+
+  .tramo-wrap { margin: 1rem 0 0.5rem; }
+  .tramo-track {
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+    margin: 6px 0;
+  }
+  .tramo-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 3px;
+    transition: width 0.4s ease;
+  }
+  .tramo-label { font-size: 12px; color: var(--muted); }
+
+  .alerta {
+    border-radius: var(--radius-sm);
+    padding: 0.75rem 1rem;
+    margin-bottom: 8px;
+    font-size: 13px;
+    line-height: 1.6;
+    border-left: 3px solid;
+  }
+
+  .alerta.warning { background: var(--warning-light); color: var(--warning); border-color: #C07A00; }
+  .alerta.danger { background: var(--danger-light); color: var(--danger); border-color: #8B2020; }
+  .alerta.success { background: var(--success-light); color: var(--success); border-color: #1A4A2A; }
+  .alerta.info { background: var(--info-light); color: var(--info); border-color: #1A2A4A; }
+
+  .rec {
+    background: var(--accent-light);
+    border-radius: var(--radius-sm);
+    padding: 0.85rem 1rem;
+    font-size: 14px;
+    color: var(--accent);
+    line-height: 1.65;
+    margin-bottom: 8px;
+    border-left: 3px solid var(--accent);
+  }
+
+  .divider { border: none; border-top: 0.5px solid var(--border); margin: 1rem 0; }
+
+  .disclaimer {
+    font-size: 12px;
+    color: var(--muted);
+    text-align: center;
+    padding: 1rem;
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    line-height: 1.6;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 2rem;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  @media (max-width: 480px) {
+    .metrics { grid-template-columns: 1fr 1fr; }
+    .boleta-row, .boleta-header { grid-template-columns: 1fr 110px 28px; }
+    .boleta-row .col-ret, .boleta-header .col-ret { display: none; }
+    header h1 { font-size: 1.6rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Honorarios Chile</h1>
+  <p>Calculadora tributaria para profesionales independientes</p>
+</header>
+
+<div class="container">
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('actuals')"><span class="tab-dot"></span>Actuals</button>
+    <button class="tab" onclick="switchTab('proyeccion')"><span class="tab-dot"></span>Proyección</button>
+    <button class="tab" onclick="switchTab('resultado')"><span class="tab-dot"></span>Resultado</button>
+  </div>
+
+  <!-- TAB ACTUALS -->
+  <div id="tab-actuals">
+    <div class="card">
+      <p class="card-label">Boletas emitidas este año</p>
+      <div class="boleta-header">
+        <span>Descripción</span>
+        <span>Monto bruto</span>
+        <span class="col-ret">Retención</span>
+        <span></span>
+      </div>
+      <div id="boletas-container"></div>
+      <button class="add-btn" onclick="addBoleta()">+ agregar boleta</button>
+    </div>
+
+    <div class="metrics" id="actuals-metrics">
+      <div class="metric"><p class="metric-label">Total boletas</p><p class="metric-value" id="m-total">$0</p></div>
+      <div class="metric"><p class="metric-label">Retenido acumulado</p><p class="metric-value success" id="m-ret">$0</p></div>
+      <div class="metric"><p class="metric-label">Sin retención</p><p class="metric-value warning" id="m-noret">$0</p></div>
+    </div>
+
+    <div class="disclaimer">
+      Ingresa cada boleta con su monto bruto. Si el pagador retuvo el 13,75%, selecciona "Con retención" — ese monto ya fue adelantado al SII por ti.
+    </div>
+  </div>
+
+  <!-- TAB PROYECCION -->
+  <div id="tab-proyeccion" style="display:none;">
+    <div class="card">
+      <p class="card-label">Ingresos proyectados — meses restantes</p>
+      <div id="proj-container"></div>
+    </div>
+
+    <div class="card">
+      <p class="card-label">APV voluntario</p>
+      <div class="apv-row">
+        <label>Monto a depositar antes del 31 de diciembre</label>
+        <input type="number" id="apv-input" value="0" min="0" step="100000" oninput="recalcular()" placeholder="0"/>
+      </div>
+      <p class="apv-note">Régimen A: el Estado bonifica un 15% adicional sobre lo ahorrado (tope ~$680.000/año). Lo depositado reduce tu renta imponible.</p>
+    </div>
+  </div>
+
+  <!-- TAB RESULTADO -->
+  <div id="tab-resultado" style="display:none;">
+    <div class="card">
+      <p class="card-label">Resumen tributario proyectado</p>
+      <div class="metrics" style="margin-bottom:1rem;">
+        <div class="metric"><p class="metric-label">Renta anual</p><p class="metric-value" id="r-renta">$0</p></div>
+        <div class="metric"><p class="metric-label">Impuesto estimado</p><p class="metric-value" id="r-imp">$0</p></div>
+        <div class="metric"><p class="metric-label" id="r-abril-label">A pagar en abril</p><p class="metric-value" id="r-abril">$0</p></div>
+        <div class="metric"><p class="metric-label">Cotizaciones</p><p class="metric-value warning" id="r-cot">$0</p></div>
+        <div class="metric"><p class="metric-label">Guardar por mes</p><p class="metric-value" id="r-mes">$0</p></div>
+        <div class="metric"><p class="metric-label">Ahorro con APV</p><p class="metric-value success" id="r-apv">$0</p></div>
+      </div>
+      <div class="tramo-wrap">
+        <div class="tramo-track"><div class="tramo-fill" id="tramo-fill" style="width:0%"></div></div>
+        <p class="tramo-label" id="tramo-label">Ingresa tus boletas para ver tu tramo tributario</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <p class="card-label">Recomendaciones</p>
+      <div id="recomendaciones"><div class="empty-state">Ingresa tus boletas para ver recomendaciones personalizadas.</div></div>
+    </div>
+
+    <div class="card">
+      <p class="card-label">Alertas</p>
+      <div id="alertas"><div class="empty-state">Sin alertas por ahora.</div></div>
+    </div>
+
+    <div class="disclaimer">
+      Esta calculadora es orientativa y no reemplaza la asesoría de un contador o profesional tributario. Los tramos y tasas corresponden al año tributario 2025 (declaración abril 2026).
+    </div>
+  </div>
+
+</div>
+
+<script>
+const TRAMOS = [
+  { desde: 0,        hasta: 9513588,  tasa: 0 },
+  { desde: 9513588,  hasta: 21141288, tasa: 0.04 },
+  { desde: 21141288, hasta: 35235480, tasa: 0.08 },
+  { desde: 35235480, hasta: 49329672, tasa: 0.135 },
+  { desde: 49329672, hasta: 63423864, tasa: 0.23 },
+  { desde: 63423864, hasta: 84564900, tasa: 0.304 },
+  { desde: 84564900, hasta: Infinity, tasa: 0.35 },
+];
+
+const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const RET = 0.1375;
+const MES_ACTUAL = new Date().getMonth();
+let boletas = [];
+let proyeccion = {};
+
+function fmt(n) { return '$' + Math.round(n).toLocaleString('es-CL'); }
+function pct(n) { return (n*100).toFixed(1)+'%'; }
+
+function calcImpuesto(renta) {
+  let imp = 0;
+  for (const t of TRAMOS) {
+    if (renta <= t.desde) break;
+    imp += (Math.min(renta, t.hasta) - t.desde) * t.tasa;
+  }
+  return Math.round(imp);
+}
+
+function getTramo(renta) {
+  for (let i = TRAMOS.length-1; i >= 0; i--) {
+    if (renta > TRAMOS[i].desde) return { idx: i, tasa: TRAMOS[i].tasa, siguiente: TRAMOS[i+1] };
+  }
+  return { idx: 0, tasa: 0, siguiente: TRAMOS[1] };
+}
+
+function addBoleta(desc='', monto=0, retenida=true) {
+  boletas.push({ id: Date.now() + Math.random(), desc, monto, retenida });
+  renderBoletas();
+  recalcular();
+}
+
+function removeBoleta(id) {
+  boletas = boletas.filter(b => b.id !== id);
+  renderBoletas();
+  recalcular();
+}
+
+function updateBoleta(id, field, val) {
+  const b = boletas.find(x => x.id === id);
+  if (b) { b[field] = val; recalcular(); }
+}
+
+function renderBoletas() {
+  const c = document.getElementById('boletas-container');
+  if (boletas.length === 0) {
+    c.innerHTML = '<div class="empty-state">Aún no hay boletas. Agrega la primera.</div>';
+    return;
+  }
+  c.innerHTML = boletas.map(b => `
+    <div class="boleta-row">
+      <input type="text" placeholder="Ej: Honorarios enero" value="${b.desc}" oninput="updateBoleta(${b.id},'desc',this.value)"/>
+      <input type="number" placeholder="0" value="${b.monto||''}" min="0" step="10000" oninput="updateBoleta(${b.id},'monto',+this.value)"/>
+      <select class="col-ret" onchange="updateBoleta(${b.id},'retenida',this.value==='true')">
+        <option value="true" ${b.retenida?'selected':''}>Con retención</option>
+        <option value="false" ${!b.retenida?'selected':''}>Sin retención</option>
+      </select>
+      <button class="del-btn" onclick="removeBoleta(${b.id})">×</button>
+    </div>
+  `).join('');
+}
+
+function renderProyeccion() {
+  const c = document.getElementById('proj-container');
+  const mesesFuturos = [];
+  for (let m = MES_ACTUAL+1; m < 12; m++) mesesFuturos.push(m);
+  if (mesesFuturos.length === 0) {
+    c.innerHTML = '<p style="font-size:13px;color:var(--muted);">Ya estamos en diciembre, no hay meses futuros que proyectar.</p>';
+    return;
+  }
+  c.innerHTML = mesesFuturos.map(m => {
+    const val = proyeccion[m] || 0;
+    const pctVal = Math.round((val/5000000)*100);
+    return `
+    <div class="proj-row">
+      <span class="proj-label">${MESES[m]}</span>
+      <input type="range" min="0" max="5000000" step="100000" value="${val}"
+        style="--pct:${pctVal}%"
+        oninput="
+          proyeccion[${m}]=+this.value;
+          document.getElementById('pv-${m}').textContent=fmt(+this.value);
+          const p=Math.round((+this.value/5000000)*100);
+          this.style.setProperty('--pct',p+'%');
+          recalcular();
+        "/>
+      <span class="proj-val" id="pv-${m}">${fmt(val)}</span>
+    </div>`;
+  }).join('');
+}
+
+function recalcular() {
+  const totalActual = boletas.reduce((s,b) => s+(b.monto||0), 0);
+  const retenidoActual = boletas.reduce((s,b) => s+(b.retenida?(b.monto||0)*RET:0), 0);
+  const sinRet = boletas.filter(b=>!b.retenida).reduce((s,b)=>s+(b.monto||0),0);
+
+  let totalProy = 0;
+  for (let m = MES_ACTUAL+1; m < 12; m++) totalProy += proyeccion[m]||0;
+
+  const rentaAnual = totalActual + totalProy;
+  const apv = Math.max(0, +(document.getElementById('apv-input')?.value||0));
+  const rentaConAPV = Math.max(0, rentaAnual - apv);
+
+  const impSinAPV = calcImpuesto(rentaAnual);
+  const impConAPV = calcImpuesto(rentaConAPV);
+  const ahorroAPV = impSinAPV - impConAPV;
+  const bonusAPV = Math.min(apv*0.15, 680000);
+  const cotizaciones = Math.round(rentaAnual*0.8*0.17);
+  const impFinal = Math.max(0, impConAPV - retenidoActual);
+  const devolucion = retenidoActual > impConAPV ? retenidoActual - impConAPV : 0;
+
+  const mesesRest = 11 - MES_ACTUAL;
+  const guardarMes = mesesRest > 0 ? Math.round((impFinal + cotizaciones) / mesesRest) : 0;
+  const tramo = getTramo(rentaAnual);
+  const pctTramo = Math.min(100, Math.round((rentaAnual/84564900)*100));
+
+  // Actuals
+  document.getElementById('m-total').textContent = fmt(totalActual);
+  document.getElementById('m-ret').textContent = fmt(retenidoActual);
+  document.getElementById('m-noret').textContent = fmt(sinRet);
+
+  // Resultado
+  document.getElementById('r-renta').textContent = fmt(rentaAnual);
+  document.getElementById('r-imp').textContent = fmt(impConAPV);
+  const abrilEl = document.getElementById('r-abril');
+  const abrilLabel = document.getElementById('r-abril-label');
+  if (devolucion > 0) {
+    abrilEl.textContent = fmt(devolucion);
+    abrilEl.className = 'metric-value success';
+    abrilLabel.textContent = 'Devolución estimada';
+  } else {
+    abrilEl.textContent = fmt(impFinal);
+    abrilEl.className = 'metric-value' + (impFinal > 0 ? ' danger' : '');
+    abrilLabel.textContent = 'A pagar en abril';
+  }
+  document.getElementById('r-cot').textContent = fmt(cotizaciones);
+  document.getElementById('r-mes').textContent = guardarMes > 0 ? fmt(guardarMes) : '—';
+  document.getElementById('r-apv').textContent = apv > 0 ? fmt(ahorroAPV + bonusAPV) : '—';
+  document.getElementById('tramo-fill').style.width = pctTramo+'%';
+  document.getElementById('tramo-label').textContent = rentaAnual > 0
+    ? `Tramo marginal actual: ${pct(tramo.tasa)} — renta proyectada ${fmt(rentaAnual)}`
+    : 'Ingresa tus boletas para ver tu tramo tributario';
+
+  // Recomendaciones
+  const recs = [];
+  if (rentaAnual === 0) {
+    recs.push('Ingresa tus boletas en la pestaña <strong>Actuals</strong> y tu proyección para ver recomendaciones personalizadas.');
+  } else {
+    if (guardarMes > 0) recs.push(`Guarda <strong>${fmt(guardarMes)} al mes</strong> durante los próximos ${mesesRest} meses para cubrir impuestos y cotizaciones en abril sin sorpresas.`);
+    if (apv === 0 && impConAPV > 0) {
+      const apvSug = Math.min(Math.round(rentaAnual*0.1/100000)*100000, 4000000);
+      const ah = calcImpuesto(rentaAnual) - calcImpuesto(Math.max(0, rentaAnual - apvSug));
+      recs.push(`Considera depositar <strong>${fmt(apvSug)} en APV</strong> antes del 31 de diciembre. Ahorrarías aproximadamente <strong>${fmt(ah)}</strong> en impuestos, más la bonificación estatal del 15%.`);
+    }
+    if (apv > 0) recs.push(`Con tu APV de <strong>${fmt(apv)}</strong>, ahorras <strong>${fmt(ahorroAPV)}</strong> en impuestos${bonusAPV>0?` más <strong>${fmt(bonusAPV)}</strong> de bonificación estatal`:''}.`);
+    if (devolucion > 0) recs.push(`Tus retenciones superan el impuesto proyectado. El SII te devolvería aproximadamente <strong>${fmt(devolucion)}</strong> en abril.`);
+  }
+  document.getElementById('recomendaciones').innerHTML = recs.map(r=>`<div class="rec">${r}</div>`).join('') || '<div class="empty-state">Sin recomendaciones aún.</div>';
+
+  // Alertas
+  const alertas = [];
+  if (tramo.siguiente && tramo.siguiente.hasta !== Infinity) {
+    const dist = tramo.siguiente.desde - rentaAnual;
+    if (dist > 0 && dist < 6000000) alertas.push({ tipo:'warning', txt:`Estás a <strong>${fmt(dist)}</strong> de cambiar al tramo del ${pct(tramo.siguiente.tasa)}. Un APV estratégico puede evitarlo.` });
+  }
+  if (totalActual > 0 && retenidoActual === 0) alertas.push({ tipo:'danger', txt:`Ninguna boleta tiene retención. Reserva al menos <strong>${fmt(impFinal)}</strong> para no tener sorpresas en abril.` });
+  if (mesesRest <= 2 && impFinal > 0) alertas.push({ tipo:'warning', txt:`Quedan pocos meses para cerrar el año. Si vas a hacer APV, el plazo límite es el <strong>31 de diciembre</strong>.` });
+  alertas.push({ tipo:'info', txt:`Declaración de renta: <strong>abril ${new Date().getFullYear()+1}</strong>. Plazo APV para este año tributario: <strong>31 de diciembre ${new Date().getFullYear()}</strong>.` });
+  document.getElementById('alertas').innerHTML = alertas.map(a=>`<div class="alerta ${a.tipo}">${a.txt}</div>`).join('') || '<div class="empty-state">Sin alertas por ahora.</div>';
+}
+
+function switchTab(tab) {
+  ['actuals','proyeccion','resultado'].forEach((t,i) => {
+    document.getElementById('tab-'+t).style.display = t===tab?'block':'none';
+    document.querySelectorAll('.tab')[i].className = 'tab'+(t===tab?' active':'');
+  });
+  if (tab==='proyeccion') renderProyeccion();
+  recalcular();
+}
+
+// Init
+renderBoletas();
+addBoleta('Honorarios enero', 1200000, true);
+addBoleta('Honorarios febrero', 1500000, false);
+addBoleta('Guardia clínica marzo', 900000, true);
+recalcular();
+</script>
+</body>
+</html>
