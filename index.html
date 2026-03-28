@@ -3,625 +3,884 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Calculadora de Honorarios — Chile</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<title>Honorarios Chile — Calculadora Tributaria</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0D1117;--surface:#161B22;--surface2:#1C2330;--border:#2A3240;
+  --text:#E8EDF3;--muted:#6B7A8F;--accent:#4A9EFF;--accent2:#1A6FD4;
+  --success:#3DD68C;--danger:#FF6B6B;--warning:#FFB547;
+  --actual:#4A9EFF;--proj:#4A9EFF44;--radius:12px;--radius-sm:8px;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:15px;line-height:1.6}
+header{padding:2rem 1.5rem 1.5rem;border-bottom:0.5px solid var(--border)}
+.header-inner{max-width:720px;margin:0 auto;display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+header h1{font-family:'DM Serif Display',serif;font-size:1.75rem;font-weight:400;letter-spacing:-0.02em;color:var(--text)}
+header p{font-size:13px;color:var(--muted);margin-top:2px}
+.year-pill{font-size:12px;color:var(--muted);background:var(--surface2);border:0.5px solid var(--border);border-radius:20px;padding:5px 12px}
+.year-pill span{color:var(--accent);font-weight:500}
+.container{max-width:720px;margin:0 auto;padding:1.5rem 1rem 4rem}
+.tabs{display:flex;background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:4px;margin-bottom:1.5rem;gap:2px}
+.tab{flex:1;padding:9px 12px;border:none;background:none;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:13px;color:var(--muted);cursor:pointer;transition:all 0.15s}
+.tab.active{background:var(--accent2);color:#fff;font-weight:500}
+.tab:not(.active):hover{background:var(--surface2);color:var(--text)}
+.tab:disabled{opacity:0.4;cursor:default}
+.card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:1.25rem;margin-bottom:1rem}
+.card-label{font-size:11px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:1rem}
+input[type=number],select.inline{background:var(--surface2);border:0.5px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:7px 10px;width:100%;outline:none;transition:border-color 0.15s;-webkit-appearance:none}
+input:focus,select.inline:focus{border-color:var(--accent)}
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:1rem}
+.metric{background:var(--surface2);border-radius:var(--radius-sm);padding:0.9rem 1rem;border:0.5px solid var(--border)}
+.metric-label{font-size:11px;color:var(--muted);margin-bottom:4px}
+.metric-value{font-size:18px;font-weight:500;color:var(--text)}
+.metric-value.danger{color:var(--danger)}
+.metric-value.success{color:var(--success)}
+.metric-value.warning{color:var(--warning)}
+.metric-value.accent{color:var(--accent)}
+.scenarios{display:flex;gap:6px;margin-bottom:1rem}
+.scenario-btn{flex:1;padding:8px;border:0.5px solid var(--border);border-radius:var(--radius-sm);background:none;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--muted);cursor:pointer;transition:all 0.15s;text-align:center}
+.scenario-btn:hover{border-color:var(--accent);color:var(--text)}
+.scenario-btn.active{border-color:var(--accent);background:var(--accent2);color:#fff;font-weight:500}
+.scenario-btn.pesimista.active{border-color:var(--danger);background:#FF6B6B22;color:var(--danger)}
+.scenario-btn.optimista.active{border-color:var(--success);background:#3DD68C22;color:var(--success)}
+.toggle-wrap{display:flex;background:var(--surface2);border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:3px;gap:2px;margin-bottom:1rem}
+.toggle-btn{flex:1;padding:6px;border:none;background:none;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--muted);cursor:pointer;transition:all 0.15s}
+.toggle-btn.active{background:var(--surface);color:var(--text);font-weight:500;border:0.5px solid var(--border)}
+.proj-table{width:100%;border-collapse:collapse}
+.proj-table td{padding:6px 4px;font-size:13px;vertical-align:middle}
+.proj-table td:first-child{color:var(--muted);width:110px}
+.proj-table td:last-child{text-align:right;color:var(--accent);font-weight:500;width:100px}
+.proj-table input[type=number]{width:100%;background:var(--surface2);border:0.5px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:5px 8px;outline:none}
+.proj-table input:focus{border-color:var(--accent)}
+.proj-table tr.closed td{opacity:0.5}
+.proj-table tr.closed td:first-child::after{content:' ✓';color:var(--success);opacity:1}
+.avg-input-wrap{display:flex;align-items:center;gap:12px;padding:0.5rem 0}
+.avg-input-wrap label{font-size:13px;color:var(--muted);flex:1}
+.avg-input-wrap input{width:160px}
+canvas{width:100%!important}
+.chart-wrap{position:relative;margin-top:0.5rem}
+.alerta{border-radius:var(--radius-sm);padding:0.75rem 1rem;margin-bottom:8px;font-size:13px;line-height:1.6;border-left:3px solid}
+.alerta.warning{background:#FFB54711;color:var(--warning);border-color:var(--warning)}
+.alerta.danger{background:#FF6B6B11;color:var(--danger);border-color:var(--danger)}
+.alerta.success{background:#3DD68C11;color:var(--success);border-color:var(--success)}
+.alerta.info{background:#4A9EFF11;color:var(--accent);border-color:var(--accent)}
+.rec{background:#4A9EFF11;border-radius:var(--radius-sm);padding:0.85rem 1rem;font-size:14px;color:var(--accent);line-height:1.65;margin-bottom:8px;border-left:3px solid var(--accent)}
+.disclaimer{font-size:12px;color:var(--muted);text-align:center;padding:1rem;border:0.5px solid var(--border);border-radius:var(--radius);background:var(--surface);line-height:1.6;margin-top:1rem}
+.empty-state{text-align:center;padding:2rem;color:var(--muted);font-size:13px}
+.divider{border:none;border-top:0.5px solid var(--border);margin:1.25rem 0}
+.section-title{font-size:13px;font-weight:500;color:var(--text);margin-bottom:0.75rem}
 
-  :root {
-    --bg: #F5F2EC;
-    --surface: #FDFCF9;
-    --border: #E2DDD5;
-    --text: #1A1814;
-    --muted: #7A7468;
-    --accent: #1A3A2A;
-    --accent-light: #E8F0EB;
-    --danger: #8B2020;
-    --danger-light: #FDF0F0;
-    --warning: #7A4F00;
-    --warning-light: #FDF5E6;
-    --success: #1A4A2A;
-    --success-light: #EBF4EE;
-    --info: #1A2A4A;
-    --info-light: #EBF0F8;
-    --radius: 10px;
-    --radius-sm: 6px;
-  }
+/* ── UPLOAD ZONE ─────────────────────────────────── */
+.privacy-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:12px;color:var(--muted);
+  background:var(--surface2);border:0.5px solid var(--border);
+  border-radius:20px;padding:5px 14px;margin-bottom:1.5rem;
+}
+.privacy-badge::before{content:'🔒';font-size:11px}
 
-  body {
-    font-family: 'DM Sans', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    font-size: 15px;
-    line-height: 1.6;
-  }
+.upload-zone{
+  border:1.5px dashed var(--border);border-radius:var(--radius);
+  padding:2.5rem 2rem;text-align:center;cursor:pointer;
+  transition:border-color 0.2s,background 0.2s;
+  margin-bottom:1.5rem;
+}
+.upload-zone:hover,.upload-zone.drag-over{
+  border-color:var(--accent);background:#4A9EFF08;
+}
+.upload-icon{
+  width:44px;height:44px;border-radius:10px;
+  background:var(--surface2);border:0.5px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 1rem;font-size:20px;
+}
+.upload-title{font-size:16px;font-weight:500;color:var(--text);margin-bottom:6px}
+.upload-sub{font-size:13px;color:var(--muted);margin-bottom:1.25rem;line-height:1.5}
+.btn-primary{
+  display:inline-flex;align-items:center;gap:8px;
+  background:var(--accent2);color:#fff;border:none;
+  border-radius:var(--radius-sm);padding:10px 20px;
+  font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;
+  cursor:pointer;transition:background 0.15s;
+}
+.btn-primary:hover{background:#1561bb}
+.btn-primary.full-width{width:100%;justify-content:center;padding:12px 20px;margin-top:1rem;font-size:15px}
+.btn-ghost{
+  background:none;border:0.5px solid var(--border);color:var(--muted);
+  border-radius:var(--radius-sm);padding:7px 14px;font-family:'DM Sans',sans-serif;
+  font-size:13px;cursor:pointer;transition:all 0.15s;white-space:nowrap;
+}
+.btn-ghost:hover{border-color:var(--text);color:var(--text)}
 
-  header {
-    background: var(--accent);
-    color: #F5F2EC;
-    padding: 2.5rem 1.5rem 2rem;
-    text-align: center;
-  }
+.how-to-card{
+  background:var(--surface);border:0.5px solid var(--border);
+  border-radius:var(--radius);padding:1.1rem 1.25rem;margin-bottom:1.25rem;
+}
+.how-to-title{font-size:12px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);margin-bottom:0.85rem}
+.how-to-steps{display:flex;flex-direction:column;gap:10px}
+.step{display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--muted);line-height:1.5}
+.step-n{
+  min-width:20px;height:20px;border-radius:50%;
+  background:var(--surface2);border:0.5px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:500;color:var(--accent);flex-shrink:0;margin-top:1px;
+}
+.step a{color:var(--accent);text-decoration:none}
+.step a:hover{text-decoration:underline}
+.step strong{color:var(--text)}
 
-  header h1 {
-    font-family: 'DM Serif Display', serif;
-    font-size: 2rem;
-    font-weight: 400;
-    letter-spacing: -0.02em;
-    margin-bottom: 0.4rem;
-  }
+.fallback-link{text-align:center;margin-top:0.5rem}
+.fallback-link a{font-size:13px;color:var(--muted);text-decoration:none;transition:color 0.15s}
+.fallback-link a:hover{color:var(--accent)}
 
-  header p {
-    font-size: 14px;
-    opacity: 0.7;
-    font-weight: 300;
-  }
+/* ── LOADED STATE ───────────────────────────────── */
+.loaded-header{
+  display:flex;align-items:center;gap:1rem;
+  background:var(--surface);border:0.5px solid var(--border);
+  border-radius:var(--radius);padding:1rem 1.25rem;
+  margin-bottom:1rem;
+}
+.loaded-check{
+  width:36px;height:36px;border-radius:50%;
+  background:#3DD68C22;border:0.5px solid var(--success);
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;color:var(--success);flex-shrink:0;
+}
+.loaded-title{font-size:15px;font-weight:500;color:var(--text);margin-bottom:2px}
+.loaded-subtitle{font-size:12px;color:var(--muted)}
+.loaded-header .btn-ghost{margin-left:auto}
 
-  .container {
-    max-width: 680px;
-    margin: 0 auto;
-    padding: 1.5rem 1rem 4rem;
-  }
+.months-grid{
+  display:grid;grid-template-columns:repeat(6,1fr);
+  gap:6px;margin-bottom:1rem;
+}
+.month-cell{
+  background:var(--surface2);border:0.5px solid var(--border);
+  border-radius:var(--radius-sm);padding:8px 6px;text-align:center;
+}
+.month-cell.has-data{border-color:#4A9EFF44;background:#4A9EFF08}
+.month-name{display:block;font-size:10px;color:var(--muted);font-weight:500;letter-spacing:0.04em;margin-bottom:3px;text-transform:uppercase}
+.month-val{display:block;font-size:12px;color:var(--text);font-weight:500}
+.month-cell.has-data .month-val{color:var(--accent)}
+.month-cell.empty .month-val{color:var(--border)}
 
-  .tabs {
-    display: flex;
-    background: var(--surface);
-    border: 0.5px solid var(--border);
-    border-radius: var(--radius);
-    padding: 4px;
-    margin: 1.5rem 0 1.25rem;
-    gap: 2px;
-  }
+/* ── MANUAL TABLE ───────────────────────────────── */
+.manual-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
+.manual-table{width:100%;border-collapse:collapse;margin-bottom:1rem}
+.manual-table th{font-size:11px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);padding:0 4px 8px;text-align:left}
+.manual-table th:last-child{text-align:right}
+.manual-table td{padding:4px}
+.manual-table td:first-child{color:var(--muted);font-size:13px;width:90px;padding-left:0}
+.manual-table .ret-tag{
+  font-size:11px;background:var(--surface2);border:0.5px solid var(--border);
+  border-radius:4px;padding:2px 7px;color:var(--muted);white-space:nowrap;
+  cursor:pointer;transition:all 0.15s;
+}
+.manual-table .ret-tag.on{background:#3DD68C22;border-color:var(--success);color:var(--success)}
 
-  .tab {
-    flex: 1;
-    padding: 8px 12px;
-    border: none;
-    background: none;
-    border-radius: var(--radius-sm);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 13px;
-    font-weight: 400;
-    color: var(--muted);
-    cursor: pointer;
-    transition: all 0.15s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-  }
-
-  .tab.active {
-    background: var(--accent);
-    color: #F5F2EC;
-    font-weight: 500;
-  }
-
-  .tab:not(.active):hover { background: var(--bg); color: var(--text); }
-
-  .tab-dot {
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: currentColor;
-    opacity: 0.5;
-  }
-
-  .tab.active .tab-dot { opacity: 1; background: #A8C5B0; }
-
-  .card {
-    background: var(--surface);
-    border: 0.5px solid var(--border);
-    border-radius: var(--radius);
-    padding: 1.25rem;
-    margin-bottom: 1rem;
-  }
-
-  .card-label {
-    font-size: 11px;
-    font-weight: 500;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 1rem;
-  }
-
-  .boleta-header {
-    display: grid;
-    grid-template-columns: 1fr 130px 120px 28px;
-    gap: 8px;
-    margin-bottom: 6px;
-  }
-
-  .boleta-header span {
-    font-size: 11px;
-    color: var(--muted);
-    font-weight: 500;
-    letter-spacing: 0.04em;
-  }
-
-  .boleta-row {
-    display: grid;
-    grid-template-columns: 1fr 130px 120px 28px;
-    gap: 8px;
-    align-items: center;
-    margin-bottom: 7px;
-  }
-
-  input[type="text"], input[type="number"], select {
-    width: 100%;
-    padding: 7px 10px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 13px;
-    color: var(--text);
-    background: var(--bg);
-    border: 0.5px solid var(--border);
-    border-radius: var(--radius-sm);
-    outline: none;
-    transition: border-color 0.15s;
-    -webkit-appearance: none;
-  }
-
-  input:focus, select:focus { border-color: var(--accent); }
-
-  select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%237A7468' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; padding-right: 26px; cursor: pointer; }
-
-  .del-btn {
-    background: none;
-    border: none;
-    color: var(--muted);
-    cursor: pointer;
-    font-size: 18px;
-    line-height: 1;
-    padding: 0;
-    transition: color 0.15s;
-  }
-  .del-btn:hover { color: var(--danger); }
-
-  .add-btn {
-    width: 100%;
-    padding: 8px;
-    background: none;
-    border: 0.5px dashed var(--border);
-    border-radius: var(--radius-sm);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 13px;
-    color: var(--muted);
-    cursor: pointer;
-    margin-top: 6px;
-    transition: all 0.15s;
-  }
-  .add-btn:hover { background: var(--bg); border-color: var(--accent); color: var(--accent); }
-
-  .metrics {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
-    margin-bottom: 1rem;
-  }
-
-  .metric {
-    background: var(--surface);
-    border: 0.5px solid var(--border);
-    border-radius: var(--radius);
-    padding: 0.9rem 1rem;
-  }
-
-  .metric-label { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
-  .metric-value { font-size: 18px; font-weight: 500; color: var(--text); }
-  .metric-value.danger { color: var(--danger); }
-  .metric-value.success { color: var(--success); }
-  .metric-value.warning { color: var(--warning); }
-
-  .proj-row {
-    display: grid;
-    grid-template-columns: 90px 1fr 100px;
-    gap: 10px;
-    align-items: center;
-    margin-bottom: 10px;
-  }
-
-  .proj-label { font-size: 13px; color: var(--muted); }
-
-  input[type="range"] {
-    -webkit-appearance: none;
-    width: 100%;
-    height: 4px;
-    border-radius: 2px;
-    background: var(--border);
-    outline: none;
-    border: none;
-    padding: 0;
-    background: linear-gradient(to right, var(--accent) 0%, var(--accent) var(--pct, 0%), var(--border) var(--pct, 0%));
-  }
-
-  input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 16px; height: 16px;
-    border-radius: 50%;
-    background: var(--accent);
-    cursor: pointer;
-    border: 2px solid var(--surface);
-    box-shadow: 0 0 0 1px var(--accent);
-  }
-
-  input[type="range"]::-moz-range-thumb {
-    width: 16px; height: 16px;
-    border-radius: 50%;
-    background: var(--accent);
-    cursor: pointer;
-    border: 2px solid var(--surface);
-  }
-
-  .proj-val { font-size: 13px; font-weight: 500; text-align: right; color: var(--text); }
-
-  .apv-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 8px;
-  }
-
-  .apv-row label { font-size: 13px; color: var(--text); flex: 1; }
-  .apv-row input { width: 150px; flex-shrink: 0; }
-
-  .apv-note { font-size: 12px; color: var(--muted); margin-top: 6px; }
-
-  .tramo-wrap { margin: 1rem 0 0.5rem; }
-  .tramo-track {
-    height: 6px;
-    background: var(--border);
-    border-radius: 3px;
-    overflow: hidden;
-    margin: 6px 0;
-  }
-  .tramo-fill {
-    height: 100%;
-    background: var(--accent);
-    border-radius: 3px;
-    transition: width 0.4s ease;
-  }
-  .tramo-label { font-size: 12px; color: var(--muted); }
-
-  .alerta {
-    border-radius: var(--radius-sm);
-    padding: 0.75rem 1rem;
-    margin-bottom: 8px;
-    font-size: 13px;
-    line-height: 1.6;
-    border-left: 3px solid;
-  }
-
-  .alerta.warning { background: var(--warning-light); color: var(--warning); border-color: #C07A00; }
-  .alerta.danger { background: var(--danger-light); color: var(--danger); border-color: #8B2020; }
-  .alerta.success { background: var(--success-light); color: var(--success); border-color: #1A4A2A; }
-  .alerta.info { background: var(--info-light); color: var(--info); border-color: #1A2A4A; }
-
-  .rec {
-    background: var(--accent-light);
-    border-radius: var(--radius-sm);
-    padding: 0.85rem 1rem;
-    font-size: 14px;
-    color: var(--accent);
-    line-height: 1.65;
-    margin-bottom: 8px;
-    border-left: 3px solid var(--accent);
-  }
-
-  .divider { border: none; border-top: 0.5px solid var(--border); margin: 1rem 0; }
-
-  .disclaimer {
-    font-size: 12px;
-    color: var(--muted);
-    text-align: center;
-    padding: 1rem;
-    border: 0.5px solid var(--border);
-    border-radius: var(--radius);
-    background: var(--surface);
-    line-height: 1.6;
-  }
-
-  .empty-state {
-    text-align: center;
-    padding: 2rem;
-    color: var(--muted);
-    font-size: 13px;
-  }
-
-  @media (max-width: 480px) {
-    .metrics { grid-template-columns: 1fr 1fr; }
-    .boleta-row, .boleta-header { grid-template-columns: 1fr 110px 28px; }
-    .boleta-row .col-ret, .boleta-header .col-ret { display: none; }
-    header h1 { font-size: 1.6rem; }
-  }
+@media(max-width:480px){
+  .metrics{grid-template-columns:1fr 1fr}
+  .months-grid{grid-template-columns:repeat(4,1fr)}
+  header h1{font-size:1.4rem}
+  .loaded-header{flex-wrap:wrap}
+  .loaded-header .btn-ghost{margin-left:0;width:100%}
+}
 </style>
 </head>
 <body>
 
 <header>
-  <h1>Honorarios Chile</h1>
-  <p>Calculadora tributaria para profesionales independientes</p>
+  <div class="header-inner">
+    <div>
+      <h1>Honorarios Chile</h1>
+      <p>Calculadora tributaria para profesionales independientes</p>
+    </div>
+    <div class="year-pill" id="year-pill" style="display:none">Año <span id="year-pill-val">—</span></div>
+  </div>
 </header>
 
 <div class="container">
-
   <div class="tabs">
-    <button class="tab active" onclick="switchTab('actuals')"><span class="tab-dot"></span>Actuals</button>
-    <button class="tab" onclick="switchTab('proyeccion')"><span class="tab-dot"></span>Proyección</button>
-    <button class="tab" onclick="switchTab('resultado')"><span class="tab-dot"></span>Resultado</button>
+    <button class="tab active" id="tab-btn-ingresos" onclick="switchTab('ingresos')">① Ingresos</button>
+    <button class="tab" id="tab-btn-proyeccion" onclick="switchTab('proyeccion')">② Proyección + Resultado</button>
   </div>
 
-  <!-- TAB ACTUALS -->
-  <div id="tab-actuals">
-    <div class="card">
-      <p class="card-label">Boletas emitidas este año</p>
-      <div class="boleta-header">
-        <span>Descripción</span>
-        <span>Monto bruto</span>
-        <span class="col-ret">Retención</span>
-        <span></span>
+  <!-- ══════════════════════════════════════
+       TAB INGRESOS
+  ══════════════════════════════════════════ -->
+  <div id="tab-ingresos">
+
+    <!-- ESTADO: UPLOAD (default) -->
+    <div id="estado-upload">
+      <div style="text-align:center;padding-top:0.5rem;margin-bottom:0.5rem">
+        <span class="privacy-badge">Tus datos nunca salen de tu browser</span>
       </div>
-      <div id="boletas-container"></div>
-      <button class="add-btn" onclick="addBoleta()">+ agregar boleta</button>
+
+      <div class="upload-zone" id="upload-zone"
+        onclick="document.getElementById('file-input').click()"
+        ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+        <div class="upload-icon">↑</div>
+        <p class="upload-title">Arrastra tu informe anual del SII</p>
+        <p class="upload-sub">Archivo .xls — "Informe Anual de Boletas de Honorarios Electrónicas"<br>Descárgalo del SII → Ver informe como planilla electrónica</p>
+        <button class="btn-primary" onclick="event.stopPropagation();document.getElementById('file-input').click()">Seleccionar archivo</button>
+        <input type="file" id="file-input" accept=".xls" style="display:none" onchange="handleFile(this.files[0])">
+      </div>
+
+      <div id="upload-error" style="display:none">
+        <div id="upload-error-msg" style="
+          background:#FF6B6B18;border:1.5px solid var(--danger);border-radius:var(--radius);
+          padding:1rem 1.25rem;font-size:14px;color:var(--danger);line-height:1.6;
+          display:flex;align-items:flex-start;gap:10px;
+        ">
+          <span style="font-size:18px;flex-shrink:0;margin-top:-1px">⚠️</span>
+          <span id="upload-error-text"></span>
+        </div>
+      </div>
+
+      <div class="how-to-card">
+        <p class="how-to-title">Cómo obtener el archivo</p>
+        <div class="how-to-steps">
+          <div class="step">
+            <span class="step-n">1</span>
+            <span>Ingresa a <a href="https://www4.sii.cl" target="_blank" rel="noopener">sii.cl</a> con tu RUT y clave tributaria</span>
+          </div>
+          <div class="step">
+            <span class="step-n">2</span>
+            <span>Ve a <strong>Servicios online → Boletas de honorarios Electrónicas → Emisor de boleta de honorarios → Consultar boletas emitidas</strong></span>
+          </div>
+          <div class="step">
+            <span class="step-n">3</span>
+            <span>Selecciona <strong>Informe Anual</strong>, elige el año y haz clic en <strong>"Ver informe como planilla electrónica"</strong></span>
+          </div>
+        </div>
+      </div>
+
+      <p class="fallback-link"><a href="#" onclick="mostrarManual(event)">Prefiero ingresar mis datos manualmente →</a></p>
     </div>
 
-    <div class="metrics" id="actuals-metrics">
-      <div class="metric"><p class="metric-label">Total boletas</p><p class="metric-value" id="m-total">$0</p></div>
-      <div class="metric"><p class="metric-label">Retenido acumulado</p><p class="metric-value success" id="m-ret">$0</p></div>
-      <div class="metric"><p class="metric-label">Sin retención</p><p class="metric-value warning" id="m-noret">$0</p></div>
+    <!-- ESTADO: CARGADO -->
+    <div id="estado-cargado" style="display:none">
+      <div class="loaded-header">
+        <div class="loaded-check">✓</div>
+        <div>
+          <p class="loaded-title" id="loaded-title">Archivo cargado</p>
+          <p class="loaded-subtitle" id="loaded-subtitle"></p>
+        </div>
+        <button class="btn-ghost" onclick="resetUpload()">Cambiar archivo</button>
+      </div>
+
+      <div class="card" style="margin-bottom:1rem">
+        <p class="card-label">Resumen mensual — Honorario bruto</p>
+        <div class="months-grid" id="months-grid"></div>
+        <div class="metrics" style="margin-bottom:0">
+          <div class="metric"><p class="metric-label">Total bruto</p><p class="metric-value accent" id="loaded-total-bruto">$0</p></div>
+          <div class="metric"><p class="metric-label">Retenido (terceros)</p><p class="metric-value success" id="loaded-total-ret">$0</p></div>
+          <div class="metric"><p class="metric-label">Meses con actividad</p><p class="metric-value" id="loaded-meses">0</p></div>
+        </div>
+      </div>
+
+      <button class="btn-primary full-width" onclick="switchTab('proyeccion')">Ver proyección y resultado →</button>
     </div>
 
-    <div class="disclaimer">
-      Ingresa cada boleta con su monto bruto. Si el pagador retuvo el 13,75%, selecciona "Con retención" — ese monto ya fue adelantado al SII por ti.
+    <!-- ESTADO: MANUAL -->
+    <div id="estado-manual" style="display:none">
+      <div class="manual-header">
+        <span class="card-label" style="margin:0">Ingresos por mes</span>
+        <button class="btn-ghost" onclick="resetUpload()">← Cargar archivo XLS</button>
+      </div>
+      <div class="card">
+        <table class="manual-table">
+          <thead><tr>
+            <th>Mes</th>
+            <th>Honorario bruto</th>
+            <th style="text-align:center">¿Con retención?</th>
+          </tr></thead>
+          <tbody id="manual-tbody"></tbody>
+        </table>
+      </div>
+      <div class="metrics">
+        <div class="metric"><p class="metric-label">Total bruto</p><p class="metric-value accent" id="m-total">$0</p></div>
+        <div class="metric"><p class="metric-label">Retenido acumulado</p><p class="metric-value success" id="m-ret">$0</p></div>
+        <div class="metric"><p class="metric-label">Sin retención</p><p class="metric-value warning" id="m-noret">$0</p></div>
+      </div>
+      <button class="btn-primary full-width" onclick="switchTab('proyeccion')">Ver proyección y resultado →</button>
     </div>
   </div>
 
-  <!-- TAB PROYECCION -->
-  <div id="tab-proyeccion" style="display:none;">
+  <!-- ══════════════════════════════════════
+       TAB PROYECCION + RESULTADO
+  ══════════════════════════════════════════ -->
+  <div id="tab-proyeccion" style="display:none">
+
+    <!-- TIMELINE -->
     <div class="card">
-      <p class="card-label">Ingresos proyectados — meses restantes</p>
-      <div id="proj-container"></div>
+      <p class="card-label">Ingresos del año</p>
+      <canvas id="timeline-chart" height="110"></canvas>
     </div>
 
+    <!-- ESCENARIOS (solo año en curso) -->
+    <div class="card" id="proj-card">
+      <p class="card-label">Proyección de ingresos</p>
+      <div class="scenarios">
+        <button class="scenario-btn pesimista" onclick="setScenario('pesimista')">Pesimista −20%</button>
+        <button class="scenario-btn base active" onclick="setScenario('base')">Base</button>
+        <button class="scenario-btn optimista" onclick="setScenario('optimista')">Optimista +20%</button>
+      </div>
+      <div class="toggle-wrap">
+        <button class="toggle-btn active" id="tog-avg" onclick="setToggle('avg')">Promedio mensual</button>
+        <button class="toggle-btn" id="tog-mes" onclick="setToggle('mes')">Mes a mes</button>
+      </div>
+      <div id="proj-avg-wrap">
+        <div class="avg-input-wrap">
+          <label>Ingreso mensual promedio estimado para meses restantes</label>
+          <input type="number" id="avg-input" placeholder="0" min="0" step="100000" oninput="updateAvg()"/>
+        </div>
+      </div>
+      <div id="proj-mes-wrap" style="display:none">
+        <table class="proj-table" id="proj-table"></table>
+      </div>
+    </div>
+
+    <!-- APV -->
     <div class="card">
       <p class="card-label">APV voluntario</p>
-      <div class="apv-row">
+      <div class="avg-input-wrap">
         <label>Monto a depositar antes del 31 de diciembre</label>
         <input type="number" id="apv-input" value="0" min="0" step="100000" oninput="recalcular()" placeholder="0"/>
       </div>
-      <p class="apv-note">Régimen A: el Estado bonifica un 15% adicional sobre lo ahorrado (tope ~$680.000/año). Lo depositado reduce tu renta imponible.</p>
+      <p style="font-size:12px;color:var(--muted);margin-top:8px">Régimen A: el Estado bonifica un 15% adicional (tope ~$680.000/año). Lo depositado reduce tu renta imponible.</p>
     </div>
-  </div>
 
-  <!-- TAB RESULTADO -->
-  <div id="tab-resultado" style="display:none;">
+    <!-- RESULTADO -->
+    <div class="divider"></div>
+    <p class="section-title">Resultado proyectado</p>
+    <div class="metrics" style="grid-template-columns:repeat(2,1fr)">
+      <div class="metric"><p class="metric-label">Renta anual</p><p class="metric-value accent" id="r-renta">$0</p></div>
+      <div class="metric"><p class="metric-label">Impuesto estimado</p><p class="metric-value" id="r-imp">$0</p></div>
+      <div class="metric"><p class="metric-label" id="r-abril-label">A pagar en abril</p><p class="metric-value danger" id="r-abril">$0</p></div>
+      <div class="metric"><p class="metric-label">Provisión mensual</p><p class="metric-value warning" id="r-mes">$0</p></div>
+    </div>
+
+    <!-- GRAFICO BARRAS APV -->
     <div class="card">
-      <p class="card-label">Resumen tributario proyectado</p>
-      <div class="metrics" style="margin-bottom:1rem;">
-        <div class="metric"><p class="metric-label">Renta anual</p><p class="metric-value" id="r-renta">$0</p></div>
-        <div class="metric"><p class="metric-label">Impuesto estimado</p><p class="metric-value" id="r-imp">$0</p></div>
-        <div class="metric"><p class="metric-label" id="r-abril-label">A pagar en abril</p><p class="metric-value" id="r-abril">$0</p></div>
-        <div class="metric"><p class="metric-label">Cotizaciones</p><p class="metric-value warning" id="r-cot">$0</p></div>
-        <div class="metric"><p class="metric-label">Guardar por mes</p><p class="metric-value" id="r-mes">$0</p></div>
-        <div class="metric"><p class="metric-label">Ahorro con APV</p><p class="metric-value success" id="r-apv">$0</p></div>
-      </div>
-      <div class="tramo-wrap">
-        <div class="tramo-track"><div class="tramo-fill" id="tramo-fill" style="width:0%"></div></div>
-        <p class="tramo-label" id="tramo-label">Ingresa tus boletas para ver tu tramo tributario</p>
+      <p class="card-label">Sin APV vs Con APV</p>
+      <canvas id="apv-chart" height="200"></canvas>
+      <div class="metrics" style="margin-top:1rem;margin-bottom:0">
+        <div class="metric"><p class="metric-label">Ahorro impuesto</p><p class="metric-value success" id="r-ahorro">$0</p></div>
+        <div class="metric"><p class="metric-label">Bonus estado (15%)</p><p class="metric-value success" id="r-bonus">$0</p></div>
+        <div class="metric"><p class="metric-label">Beneficio total APV</p><p class="metric-value success" id="r-total-apv">$0</p></div>
       </div>
     </div>
 
+    <!-- RECOMENDACIONES Y ALERTAS -->
     <div class="card">
       <p class="card-label">Recomendaciones</p>
-      <div id="recomendaciones"><div class="empty-state">Ingresa tus boletas para ver recomendaciones personalizadas.</div></div>
+      <div id="recomendaciones"><div class="empty-state">Carga tus ingresos en el paso anterior.</div></div>
     </div>
-
     <div class="card">
       <p class="card-label">Alertas</p>
       <div id="alertas"><div class="empty-state">Sin alertas por ahora.</div></div>
     </div>
 
-    <div class="disclaimer">
-      Esta calculadora es orientativa y no reemplaza la asesoría de un contador o profesional tributario. Los tramos y tasas corresponden al año tributario 2025 (declaración abril 2026).
-    </div>
+    <div class="disclaimer">Esta calculadora es orientativa y no reemplaza la asesoría de un contador. Tramos corresponden al año tributario detectado del archivo.</div>
   </div>
-
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script>
-const TRAMOS = [
-  { desde: 0,        hasta: 9513588,  tasa: 0 },
-  { desde: 9513588,  hasta: 21141288, tasa: 0.04 },
-  { desde: 21141288, hasta: 35235480, tasa: 0.08 },
-  { desde: 35235480, hasta: 49329672, tasa: 0.135 },
-  { desde: 49329672, hasta: 63423864, tasa: 0.23 },
-  { desde: 63423864, hasta: 84564900, tasa: 0.304 },
-  { desde: 84564900, hasta: Infinity, tasa: 0.35 },
-];
-
-const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const MESES     = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+const MESES_FULL= ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const MESES_SII = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
 const RET = 0.1375;
-const MES_ACTUAL = new Date().getMonth();
-let boletas = [];
-let proyeccion = {};
 
-function fmt(n) { return '$' + Math.round(n).toLocaleString('es-CL'); }
-function pct(n) { return (n*100).toFixed(1)+'%'; }
+const TRAMOS_POR_ANIO = {
+  2026:[{d:0,h:9513588,t:0},{d:9513588,h:21141288,t:.04},{d:21141288,h:35235480,t:.08},{d:35235480,h:49329672,t:.135},{d:49329672,h:63423864,t:.23},{d:63423864,h:84564900,t:.304},{d:84564900,h:Infinity,t:.35}],
+  2025:[{d:0,h:9152832,t:0},{d:9152832,h:20339616,t:.04},{d:20339616,h:33899364,t:.08},{d:33899364,h:47459112,t:.135},{d:47459112,h:61018860,t:.23},{d:61018860,h:81358464,t:.304},{d:81358464,h:Infinity,t:.35}],
+  2024:[{d:0,h:8787408,t:0},{d:8787408,h:19527552,t:.04},{d:19527552,h:32545920,t:.08},{d:32545920,h:45564288,t:.135},{d:45564288,h:58582656,t:.23},{d:58582656,h:78110208,t:.304},{d:78110208,h:Infinity,t:.35}],
+};
 
-function calcImpuesto(renta) {
-  let imp = 0;
-  for (const t of TRAMOS) {
-    if (renta <= t.desde) break;
-    imp += (Math.min(renta, t.hasta) - t.desde) * t.tasa;
+// ── Estado global ─────────────────────────────────
+// mesesActuales: Array(12) de {bruto, retencion}
+// bruto: honorario bruto del mes (0 si no hay actividad)
+// retencion: retención de terceros del mes
+let mesesActuales = Array(12).fill(null).map(()=>({bruto:0,retencion:0}));
+let mesesRetManual= Array(12).fill(true); // para modo manual: ¿tiene retención?
+let proyeccion    = {};
+let toggleMode    = 'avg';
+let scenario      = 'base';
+let anio          = new Date().getFullYear();
+let mesActual     = new Date().getMonth(); // 0-indexed
+let esPasado      = false;
+let dataSource    = null; // 'xls' | 'manual' | null
+let timelineChart = null;
+let apvChart      = null;
+
+// ── Helpers ───────────────────────────────────────
+function fmt(n){ return '$'+Math.round(n).toLocaleString('es-CL'); }
+function fmtM(n){
+  if(n===0) return '—';
+  if(Math.abs(n)>=1000000) return '$'+(Math.round(n/100000)/10).toLocaleString('es-CL')+'M';
+  return '$'+Math.round(n/1000).toLocaleString('es-CL')+'K';
+}
+function pct(n){ return (n*100).toFixed(1)+'%'; }
+
+function calcImpuesto(renta){
+  const tramos = TRAMOS_POR_ANIO[anio] || TRAMOS_POR_ANIO[2025];
+  let imp=0;
+  for(const t of tramos){
+    if(renta<=t.d) break;
+    imp+=(Math.min(renta,t.h)-t.d)*t.t;
   }
   return Math.round(imp);
 }
 
-function getTramo(renta) {
-  for (let i = TRAMOS.length-1; i >= 0; i--) {
-    if (renta > TRAMOS[i].desde) return { idx: i, tasa: TRAMOS[i].tasa, siguiente: TRAMOS[i+1] };
+function getTramo(renta){
+  const tramos=TRAMOS_POR_ANIO[anio]||TRAMOS_POR_ANIO[2025];
+  for(let i=tramos.length-1;i>=0;i--){
+    if(renta>tramos[i].d) return {idx:i,tasa:tramos[i].t,siguiente:tramos[i+1]};
   }
-  return { idx: 0, tasa: 0, siguiente: TRAMOS[1] };
+  return {idx:0,tasa:0,siguiente:tramos[1]};
 }
 
-function addBoleta(desc='', monto=0, retenida=true) {
-  boletas.push({ id: Date.now() + Math.random(), desc, monto, retenida });
-  renderBoletas();
+function scenarioFactor(){
+  return scenario==='optimista'?1.2:scenario==='pesimista'?0.8:1;
+}
+
+function getProyeccionMes(m){
+  if(esPasado) return 0;
+  if(m<=mesActual) return 0;
+  const factor=scenarioFactor();
+  if(toggleMode==='avg'){
+    const avg=+(document.getElementById('avg-input')?.value||0);
+    return Math.round(avg*factor);
+  }
+  return Math.round((proyeccion[m]||0)*factor);
+}
+
+// ── Parser XLS del SII ────────────────────────────
+function parseXLSSII(text){
+  const parser=new DOMParser();
+  const doc=parser.parseFromString(text,'text/html');
+
+  // Detectar año desde primera celda con texto largo
+  let year=null;
+  doc.querySelectorAll('td').forEach(td=>{
+    if(year) return;
+    const m=td.textContent.match(/año\s+(\d{4})/i);
+    if(m) year=parseInt(m[1]);
+  });
+
+  const months=Array(12).fill(null).map(()=>({bruto:0,retencionTerceros:0,retencionPPM:0,liquido:0}));
+
+  doc.querySelectorAll('tr').forEach(row=>{
+    const cells=[...row.querySelectorAll('td')];
+    if(cells.length<5) return;
+    const mesNombre=cells[0].textContent.trim().toUpperCase();
+    const idx=MESES_SII.indexOf(mesNombre);
+    if(idx===-1) return;
+    const parseVal=c=>{
+      const t=c.textContent.replace(/\./g,'').replace(',','.').trim();
+      return parseInt(t)||0;
+    };
+    // Columnas: [0]=mes, [1]=folioInicial, [2]=folioFinal, [3]=vigentes, [4]=anuladas,
+    //           [5]=honorarioBruto, [6]=retencionTerceros, [7]=retencionPPM, [8]=totalLiquido
+    months[idx]={
+      bruto:           cells[5]?parseVal(cells[5]):0,
+      retencionTerceros:cells[6]?parseVal(cells[6]):0,
+      retencionPPM:    cells[7]?parseVal(cells[7]):0,
+      liquido:         cells[8]?parseVal(cells[8]):0,
+    };
+  });
+
+  return {year, months};
+}
+
+// ── File handling ─────────────────────────────────
+function handleFile(file){
+  if(!file) return;
+  if(!file.name.toLowerCase().endsWith('.xls')){
+    showUploadError('El archivo debe ser un .xls descargado del SII (Informe Anual de Boletas de Honorarios Electrónicas).');
+    return;
+  }
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const text=e.target.result;
+      const parsed=parseXLSSII(text);
+      if(!parsed.year){
+        showUploadError('No se pudo detectar el año en el archivo. Asegúrate de que es el "Informe Anual de Boletas de Honorarios Electrónicas".');
+        return;
+      }
+      loadXLSData(parsed);
+    } catch(err){
+      showUploadError('Error al procesar el archivo: '+err.message);
+    }
+  };
+  reader.readAsText(file,'ISO-8859-1');
+}
+
+function loadXLSData(parsed){
+  anio=parsed.year;
+  esPasado=anio<new Date().getFullYear();
+  dataSource='xls';
+
+  // Poblar mesesActuales
+  mesesActuales=parsed.months.map(m=>({
+    bruto:m.bruto,
+    retencion:m.retencionTerceros,
+  }));
+
+  // Si año en curso: los meses futuros no deben tener datos (son 0 por def del SII)
+  // Si año pasado: todos los meses son actuals
+
+  // Calcular promedio de meses con actividad como sugerencia para proyección
+  if(!esPasado){
+    const mesesConDatos=mesesActuales.filter((m,i)=>i<=mesActual&&m.bruto>0);
+    if(mesesConDatos.length>0){
+      const promedio=Math.round(mesesConDatos.reduce((s,m)=>s+m.bruto,0)/mesesConDatos.length);
+      const avgInput=document.getElementById('avg-input');
+      if(avgInput&&!avgInput.value) avgInput.value=promedio;
+    }
+  }
+
+  mostrarEstadoCargado();
+}
+
+function mostrarEstadoCargado(){
+  document.getElementById('estado-upload').style.display='none';
+  document.getElementById('estado-manual').style.display='none';
+  document.getElementById('estado-cargado').style.display='block';
+  document.getElementById('year-pill').style.display='inline-flex';
+  document.getElementById('year-pill-val').textContent=anio;
+
+  // Título y subtítulo
+  document.getElementById('loaded-title').textContent=
+    'Informe '+anio+' cargado correctamente';
+  const modoTexto=esPasado
+    ? 'Año cerrado — análisis completo disponible'
+    : 'Año en curso — proyección activada para meses restantes';
+  document.getElementById('loaded-subtitle').textContent=modoTexto;
+
+  // Grid mensual
+  const grid=document.getElementById('months-grid');
+  grid.innerHTML=mesesActuales.map((m,i)=>`
+    <div class="month-cell ${m.bruto>0?'has-data':'empty'}">
+      <span class="month-name">${MESES[i]}</span>
+      <span class="month-val">${m.bruto>0?fmtM(m.bruto):'—'}</span>
+    </div>`).join('');
+
+  // Totales
+  const totalBruto=mesesActuales.reduce((s,m)=>s+m.bruto,0);
+  const totalRet=mesesActuales.reduce((s,m)=>s+m.retencion,0);
+  const mesesActivos=mesesActuales.filter(m=>m.bruto>0).length;
+  document.getElementById('loaded-total-bruto').textContent=fmt(totalBruto);
+  document.getElementById('loaded-total-ret').textContent=fmt(totalRet);
+  document.getElementById('loaded-meses').textContent=mesesActivos;
+
+  hideUploadError();
   recalcular();
 }
 
-function removeBoleta(id) {
-  boletas = boletas.filter(b => b.id !== id);
-  renderBoletas();
+function showUploadError(msg){
+  document.getElementById('upload-error-text').textContent=msg;
+  document.getElementById('upload-error').style.display='block';
+  document.getElementById('upload-error').scrollIntoView({behavior:'smooth',block:'center'});
+}
+function hideUploadError(){
+  document.getElementById('upload-error').style.display='none';
+}
+
+// ── Drag & drop ───────────────────────────────────
+function onDragOver(e){
+  e.preventDefault();
+  document.getElementById('upload-zone').classList.add('drag-over');
+}
+function onDragLeave(e){
+  document.getElementById('upload-zone').classList.remove('drag-over');
+}
+function onDrop(e){
+  e.preventDefault();
+  document.getElementById('upload-zone').classList.remove('drag-over');
+  const file=e.dataTransfer.files[0];
+  if(file) handleFile(file);
+}
+
+// ── Modo manual ───────────────────────────────────
+function mostrarManual(e){
+  e&&e.preventDefault();
+  dataSource='manual';
+  esPasado=false; // en manual, asumimos año actual
+  anio=new Date().getFullYear();
+  document.getElementById('year-pill').style.display='inline-flex';
+  document.getElementById('year-pill-val').textContent=anio;
+  document.getElementById('estado-upload').style.display='none';
+  document.getElementById('estado-cargado').style.display='none';
+  document.getElementById('estado-manual').style.display='block';
+  renderManualTable();
   recalcular();
 }
 
-function updateBoleta(id, field, val) {
-  const b = boletas.find(x => x.id === id);
-  if (b) { b[field] = val; recalcular(); }
-}
-
-function renderBoletas() {
-  const c = document.getElementById('boletas-container');
-  if (boletas.length === 0) {
-    c.innerHTML = '<div class="empty-state">Aún no hay boletas. Agrega la primera.</div>';
-    return;
-  }
-  c.innerHTML = boletas.map(b => `
-    <div class="boleta-row">
-      <input type="text" placeholder="Ej: Honorarios enero" value="${b.desc}" oninput="updateBoleta(${b.id},'desc',this.value)"/>
-      <input type="number" placeholder="0" value="${b.monto||''}" min="0" step="10000" oninput="updateBoleta(${b.id},'monto',+this.value)"/>
-      <select class="col-ret" onchange="updateBoleta(${b.id},'retenida',this.value==='true')">
-        <option value="true" ${b.retenida?'selected':''}>Con retención</option>
-        <option value="false" ${!b.retenida?'selected':''}>Sin retención</option>
-      </select>
-      <button class="del-btn" onclick="removeBoleta(${b.id})">×</button>
-    </div>
-  `).join('');
-}
-
-function renderProyeccion() {
-  const c = document.getElementById('proj-container');
-  const mesesFuturos = [];
-  for (let m = MES_ACTUAL+1; m < 12; m++) mesesFuturos.push(m);
-  if (mesesFuturos.length === 0) {
-    c.innerHTML = '<p style="font-size:13px;color:var(--muted);">Ya estamos en diciembre, no hay meses futuros que proyectar.</p>';
-    return;
-  }
-  c.innerHTML = mesesFuturos.map(m => {
-    const val = proyeccion[m] || 0;
-    const pctVal = Math.round((val/5000000)*100);
-    return `
-    <div class="proj-row">
-      <span class="proj-label">${MESES[m]}</span>
-      <input type="range" min="0" max="5000000" step="100000" value="${val}"
-        style="--pct:${pctVal}%"
-        oninput="
-          proyeccion[${m}]=+this.value;
-          document.getElementById('pv-${m}').textContent=fmt(+this.value);
-          const p=Math.round((+this.value/5000000)*100);
-          this.style.setProperty('--pct',p+'%');
-          recalcular();
-        "/>
-      <span class="proj-val" id="pv-${m}">${fmt(val)}</span>
-    </div>`;
+function renderManualTable(){
+  const tbody=document.getElementById('manual-tbody');
+  tbody.innerHTML=MESES_FULL.map((mes,m)=>{
+    const closed=!esPasado&&m<mesActual;
+    const actual=mesesActuales[m];
+    return `<tr>
+      <td>${mes}</td>
+      <td><input type="number" placeholder="0" value="${actual.bruto||''}" min="0" step="100000"
+        oninput="updateManual(${m},'bruto',+this.value)"/></td>
+      <td style="text-align:center">
+        <span class="ret-tag ${mesesRetManual[m]?'on':''}"
+          onclick="toggleRetManual(${m},this)">${mesesRetManual[m]?'Con retención':'Sin retención'}</span>
+      </td>
+    </tr>`;
   }).join('');
 }
 
-function recalcular() {
-  const totalActual = boletas.reduce((s,b) => s+(b.monto||0), 0);
-  const retenidoActual = boletas.reduce((s,b) => s+(b.retenida?(b.monto||0)*RET:0), 0);
-  const sinRet = boletas.filter(b=>!b.retenida).reduce((s,b)=>s+(b.monto||0),0);
-
-  let totalProy = 0;
-  for (let m = MES_ACTUAL+1; m < 12; m++) totalProy += proyeccion[m]||0;
-
-  const rentaAnual = totalActual + totalProy;
-  const apv = Math.max(0, +(document.getElementById('apv-input')?.value||0));
-  const rentaConAPV = Math.max(0, rentaAnual - apv);
-
-  const impSinAPV = calcImpuesto(rentaAnual);
-  const impConAPV = calcImpuesto(rentaConAPV);
-  const ahorroAPV = impSinAPV - impConAPV;
-  const bonusAPV = Math.min(apv*0.15, 680000);
-  const cotizaciones = Math.round(rentaAnual*0.8*0.17);
-  const impFinal = Math.max(0, impConAPV - retenidoActual);
-  const devolucion = retenidoActual > impConAPV ? retenidoActual - impConAPV : 0;
-
-  const mesesRest = 11 - MES_ACTUAL;
-  const guardarMes = mesesRest > 0 ? Math.round((impFinal + cotizaciones) / mesesRest) : 0;
-  const tramo = getTramo(rentaAnual);
-  const pctTramo = Math.min(100, Math.round((rentaAnual/84564900)*100));
-
-  // Actuals
-  document.getElementById('m-total').textContent = fmt(totalActual);
-  document.getElementById('m-ret').textContent = fmt(retenidoActual);
-  document.getElementById('m-noret').textContent = fmt(sinRet);
-
-  // Resultado
-  document.getElementById('r-renta').textContent = fmt(rentaAnual);
-  document.getElementById('r-imp').textContent = fmt(impConAPV);
-  const abrilEl = document.getElementById('r-abril');
-  const abrilLabel = document.getElementById('r-abril-label');
-  if (devolucion > 0) {
-    abrilEl.textContent = fmt(devolucion);
-    abrilEl.className = 'metric-value success';
-    abrilLabel.textContent = 'Devolución estimada';
-  } else {
-    abrilEl.textContent = fmt(impFinal);
-    abrilEl.className = 'metric-value' + (impFinal > 0 ? ' danger' : '');
-    abrilLabel.textContent = 'A pagar en abril';
+function updateManual(m,field,val){
+  if(field==='bruto'){
+    mesesActuales[m].bruto=val;
+    mesesActuales[m].retencion=mesesRetManual[m]?Math.round(val*RET):0;
   }
-  document.getElementById('r-cot').textContent = fmt(cotizaciones);
-  document.getElementById('r-mes').textContent = guardarMes > 0 ? fmt(guardarMes) : '—';
-  document.getElementById('r-apv').textContent = apv > 0 ? fmt(ahorroAPV + bonusAPV) : '—';
-  document.getElementById('tramo-fill').style.width = pctTramo+'%';
-  document.getElementById('tramo-label').textContent = rentaAnual > 0
-    ? `Tramo marginal actual: ${pct(tramo.tasa)} — renta proyectada ${fmt(rentaAnual)}`
-    : 'Ingresa tus boletas para ver tu tramo tributario';
-
-  // Recomendaciones
-  const recs = [];
-  if (rentaAnual === 0) {
-    recs.push('Ingresa tus boletas en la pestaña <strong>Actuals</strong> y tu proyección para ver recomendaciones personalizadas.');
-  } else {
-    if (guardarMes > 0) recs.push(`Guarda <strong>${fmt(guardarMes)} al mes</strong> durante los próximos ${mesesRest} meses para cubrir impuestos y cotizaciones en abril sin sorpresas.`);
-    if (apv === 0 && impConAPV > 0) {
-      const apvSug = Math.min(Math.round(rentaAnual*0.1/100000)*100000, 4000000);
-      const ah = calcImpuesto(rentaAnual) - calcImpuesto(Math.max(0, rentaAnual - apvSug));
-      recs.push(`Considera depositar <strong>${fmt(apvSug)} en APV</strong> antes del 31 de diciembre. Ahorrarías aproximadamente <strong>${fmt(ah)}</strong> en impuestos, más la bonificación estatal del 15%.`);
-    }
-    if (apv > 0) recs.push(`Con tu APV de <strong>${fmt(apv)}</strong>, ahorras <strong>${fmt(ahorroAPV)}</strong> en impuestos${bonusAPV>0?` más <strong>${fmt(bonusAPV)}</strong> de bonificación estatal`:''}.`);
-    if (devolucion > 0) recs.push(`Tus retenciones superan el impuesto proyectado. El SII te devolvería aproximadamente <strong>${fmt(devolucion)}</strong> en abril.`);
-  }
-  document.getElementById('recomendaciones').innerHTML = recs.map(r=>`<div class="rec">${r}</div>`).join('') || '<div class="empty-state">Sin recomendaciones aún.</div>';
-
-  // Alertas
-  const alertas = [];
-  if (tramo.siguiente && tramo.siguiente.hasta !== Infinity) {
-    const dist = tramo.siguiente.desde - rentaAnual;
-    if (dist > 0 && dist < 6000000) alertas.push({ tipo:'warning', txt:`Estás a <strong>${fmt(dist)}</strong> de cambiar al tramo del ${pct(tramo.siguiente.tasa)}. Un APV estratégico puede evitarlo.` });
-  }
-  if (totalActual > 0 && retenidoActual === 0) alertas.push({ tipo:'danger', txt:`Ninguna boleta tiene retención. Reserva al menos <strong>${fmt(impFinal)}</strong> para no tener sorpresas en abril.` });
-  if (mesesRest <= 2 && impFinal > 0) alertas.push({ tipo:'warning', txt:`Quedan pocos meses para cerrar el año. Si vas a hacer APV, el plazo límite es el <strong>31 de diciembre</strong>.` });
-  alertas.push({ tipo:'info', txt:`Declaración de renta: <strong>abril ${new Date().getFullYear()+1}</strong>. Plazo APV para este año tributario: <strong>31 de diciembre ${new Date().getFullYear()}</strong>.` });
-  document.getElementById('alertas').innerHTML = alertas.map(a=>`<div class="alerta ${a.tipo}">${a.txt}</div>`).join('') || '<div class="empty-state">Sin alertas por ahora.</div>';
+  updateManualTotals();
+  recalcular();
+  renderTimeline();
 }
 
-function switchTab(tab) {
-  ['actuals','proyeccion','resultado'].forEach((t,i) => {
-    document.getElementById('tab-'+t).style.display = t===tab?'block':'none';
-    document.querySelectorAll('.tab')[i].className = 'tab'+(t===tab?' active':'');
-  });
-  if (tab==='proyeccion') renderProyeccion();
+function toggleRetManual(m,el){
+  mesesRetManual[m]=!mesesRetManual[m];
+  el.textContent=mesesRetManual[m]?'Con retención':'Sin retención';
+  el.classList.toggle('on',mesesRetManual[m]);
+  mesesActuales[m].retencion=mesesRetManual[m]?Math.round(mesesActuales[m].bruto*RET):0;
+  updateManualTotals();
   recalcular();
 }
 
-// Init
-renderBoletas();
-addBoleta('Honorarios enero', 1200000, true);
-addBoleta('Honorarios febrero', 1500000, false);
-addBoleta('Guardia clínica marzo', 900000, true);
+function updateManualTotals(){
+  const totalBruto=mesesActuales.reduce((s,m)=>s+m.bruto,0);
+  const totalRet=mesesActuales.reduce((s,m)=>s+m.retencion,0);
+  const sinRet=totalBruto-totalBruto*(totalRet>0?RET:0); // aproximado
+  const sinRetExact=mesesActuales.reduce((s,m,i)=>s+(mesesRetManual[i]?0:m.bruto),0);
+  document.getElementById('m-total').textContent=fmt(totalBruto);
+  document.getElementById('m-ret').textContent=fmt(totalRet);
+  document.getElementById('m-noret').textContent=fmt(sinRetExact);
+}
+
+function resetUpload(){
+  dataSource=null;
+  mesesActuales=Array(12).fill(null).map(()=>({bruto:0,retencion:0}));
+  proyeccion={};
+  document.getElementById('estado-upload').style.display='block';
+  document.getElementById('estado-cargado').style.display='none';
+  document.getElementById('estado-manual').style.display='none';
+  document.getElementById('year-pill').style.display='none';
+  document.getElementById('file-input').value='';
+  hideUploadError();
+  recalcular();
+}
+
+// ── Proyección ────────────────────────────────────
+function setToggle(mode){
+  toggleMode=mode;
+  document.getElementById('tog-avg').className='toggle-btn'+(mode==='avg'?' active':'');
+  document.getElementById('tog-mes').className='toggle-btn'+(mode==='mes'?' active':'');
+  document.getElementById('proj-avg-wrap').style.display=mode==='avg'?'block':'none';
+  document.getElementById('proj-mes-wrap').style.display=mode==='mes'?'block':'none';
+  recalcular(); renderTimeline();
+}
+
+function setScenario(s){
+  scenario=s;
+  document.querySelectorAll('.scenario-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelector('.scenario-btn.'+s).classList.add('active');
+  recalcular(); renderTimeline();
+}
+
+function updateAvg(){
+  recalcular(); renderTimeline();
+}
+
+function renderProjTable(){
+  if(esPasado) return;
+  const t=document.getElementById('proj-table');
+  t.innerHTML=MESES_FULL.map((mes,m)=>{
+    const closed=m<=mesActual;
+    if(closed){
+      const v=mesesActuales[m].bruto;
+      return `<tr class="closed"><td>${mes}</td><td colspan="2" style="color:var(--muted);font-size:12px">${v>0?fmt(v):'Sin actividad'}</td></tr>`;
+    }
+    return `<tr>
+      <td>${mes}</td>
+      <td><input type="number" placeholder="0" value="${proyeccion[m]||''}" min="0" step="100000"
+        oninput="proyeccion[${m}]=+this.value;recalcular();renderTimeline()"/></td>
+      <td>${fmt(getProyeccionMes(m))}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Timeline chart ────────────────────────────────
+function renderTimeline(){
+  const ctx=document.getElementById('timeline-chart');
+  if(!ctx) return;
+
+  const actualesData=Array(12).fill(null);
+  const proyData=Array(12).fill(null);
+
+  for(let m=0;m<12;m++){
+    if(esPasado){
+      actualesData[m]=mesesActuales[m].bruto||null;
+    } else {
+      if(m<=mesActual){
+        actualesData[m]=mesesActuales[m].bruto||null;
+      } else {
+        const proy=getProyeccionMes(m);
+        proyData[m]=proy||null;
+      }
+    }
+  }
+
+  if(timelineChart) timelineChart.destroy();
+  timelineChart=new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels:MESES,
+      datasets:[
+        {label:'Actual',data:actualesData,backgroundColor:'#4A9EFF',borderRadius:4,borderSkipped:false},
+        {label:'Proyectado',data:proyData,backgroundColor:'#4A9EFF33',borderRadius:4,borderSkipped:false,borderColor:'#4A9EFF66',borderWidth:1},
+      ]
+    },
+    options:{
+      responsive:true,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+fmt(c.raw||0)}}},
+      scales:{
+        x:{grid:{color:'#2A324020'},ticks:{color:'#6B7A8F',font:{size:11,family:'DM Sans'}}},
+        y:{grid:{color:'#2A324020'},ticks:{color:'#6B7A8F',font:{size:11,family:'DM Sans'},callback:v=>'$'+Math.round(v/1000000*10)/10+'M'},beginAtZero:true}
+      }
+    }
+  });
+}
+
+// ── APV chart ─────────────────────────────────────
+function renderApvChart(sinApv,conApv,impSin,impCon,cot,apv,neto1,neto2){
+  const ctx=document.getElementById('apv-chart');
+  if(!ctx) return;
+  if(apvChart) apvChart.destroy();
+  apvChart=new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels:['Sin APV','Con APV'],
+      datasets:[
+        {label:'Impuesto',data:[impSin,impCon],backgroundColor:'#FF6B6B99',borderColor:'#FF6B6B',borderWidth:1,borderRadius:4,borderSkipped:false},
+        {label:'Cotizaciones',data:[cot,cot],backgroundColor:'#FFB54799',borderColor:'#FFB547',borderWidth:1,borderRadius:4,borderSkipped:false},
+        {label:'APV',data:[0,apv],backgroundColor:'#4A9EFF99',borderColor:'#4A9EFF',borderWidth:1,borderRadius:4,borderSkipped:false},
+        {label:'Neto',data:[neto1,neto2],backgroundColor:'#3DD68C99',borderColor:'#3DD68C',borderWidth:1,borderRadius:4,borderSkipped:false},
+      ]
+    },
+    options:{
+      responsive:true,
+      plugins:{
+        legend:{position:'bottom',labels:{color:'#6B7A8F',font:{size:11,family:'DM Sans'},boxWidth:12,padding:12}},
+        tooltip:{callbacks:{label:c=>' '+c.dataset.label+': '+fmt(c.raw||0)}}
+      },
+      scales:{
+        x:{stacked:true,grid:{display:false},ticks:{color:'#6B7A8F',font:{size:12,family:'DM Sans'}}},
+        y:{stacked:true,grid:{color:'#2A324020'},ticks:{color:'#6B7A8F',font:{size:11,family:'DM Sans'},callback:v=>'$'+Math.round(v/1000000*10)/10+'M'},beginAtZero:true}
+      }
+    }
+  });
+}
+
+// ── Recalcular ────────────────────────────────────
+function recalcular(){
+  const totalActual=mesesActuales.reduce((s,m)=>s+m.bruto,0);
+  const retenidoActual=mesesActuales.reduce((s,m)=>s+m.retencion,0);
+
+  let totalProy=0;
+  if(!esPasado){
+    for(let m=mesActual+1;m<12;m++) totalProy+=getProyeccionMes(m);
+  }
+
+  const rentaAnual=totalActual+totalProy;
+  const apv=Math.max(0,+(document.getElementById('apv-input')?.value||0));
+  const rentaConAPV=Math.max(0,rentaAnual-apv);
+  const impSinAPV=calcImpuesto(rentaAnual);
+  const impConAPV=calcImpuesto(rentaConAPV);
+  const ahorroAPV=impSinAPV-impConAPV;
+  const bonusAPV=Math.min(apv*0.15,680000);
+  const cotizaciones=Math.round(rentaAnual*0.8*0.17);
+  const impFinal=Math.max(0,impConAPV-retenidoActual);
+  const devolucion=retenidoActual>impConAPV?retenidoActual-impConAPV:0;
+  const mesesRest=esPasado?0:(11-mesActual);
+  const guardarMes=mesesRest>0?Math.round((impFinal+cotizaciones)/mesesRest):0;
+  const neto1=Math.max(0,rentaAnual-impSinAPV-cotizaciones);
+  const neto2=Math.max(0,rentaAnual-impConAPV-cotizaciones-apv);
+
+  // Proyección card: solo para año en curso
+  document.getElementById('proj-card').style.display=esPasado?'none':'block';
+
+  document.getElementById('r-renta').textContent=fmt(rentaAnual);
+  document.getElementById('r-imp').textContent=fmt(impConAPV);
+  document.getElementById('r-imp').className='metric-value'+(impConAPV>0?' danger':'');
+
+  const abrilEl=document.getElementById('r-abril');
+  const abrilLabel=document.getElementById('r-abril-label');
+  if(devolucion>0){
+    abrilEl.textContent=fmt(devolucion);abrilEl.className='metric-value success';abrilLabel.textContent='Devolución estimada';
+  } else {
+    abrilEl.textContent=fmt(impFinal);abrilEl.className='metric-value'+(impFinal>0?' danger':'');abrilLabel.textContent='A pagar en abril';
+  }
+  document.getElementById('r-mes').textContent=guardarMes>0?fmt(guardarMes):'—';
+  document.getElementById('r-ahorro').textContent=fmt(ahorroAPV);
+  document.getElementById('r-bonus').textContent=fmt(bonusAPV);
+  document.getElementById('r-total-apv').textContent=fmt(ahorroAPV+bonusAPV);
+
+  renderApvChart(rentaAnual,rentaAnual,impSinAPV,impConAPV,cotizaciones,apv,neto1,neto2);
+
+  // Recomendaciones
+  const recs=[];
+  if(rentaAnual===0){
+    recs.push('Carga tu informe anual del SII en el paso <strong>① Ingresos</strong> para ver recomendaciones personalizadas.');
+  } else {
+    if(guardarMes>0) recs.push(`Guarda <strong>${fmt(guardarMes)} al mes</strong> durante los próximos ${mesesRest} meses para cubrir impuestos y cotizaciones en abril sin sorpresas.`);
+    if(apv===0&&impConAPV>0){
+      const apvSug=Math.min(Math.round(rentaAnual*0.1/100000)*100000,4000000);
+      const ah=calcImpuesto(rentaAnual)-calcImpuesto(Math.max(0,rentaAnual-apvSug));
+      recs.push(`Considera depositar <strong>${fmt(apvSug)} en APV</strong> antes del 31 de diciembre. Ahorrarías <strong>${fmt(ah)}</strong> en impuestos más la bonificación estatal del 15%.`);
+    }
+    if(apv>0) recs.push(`Con tu APV de <strong>${fmt(apv)}</strong>, ahorras <strong>${fmt(ahorroAPV)}</strong> en impuestos${bonusAPV>0?` más <strong>${fmt(bonusAPV)}</strong> de bonificación estatal`:''}.`);
+    if(devolucion>0) recs.push(`Tus retenciones superan el impuesto proyectado. El SII te devolvería <strong>${fmt(devolucion)}</strong> en la operación renta de abril.`);
+    if(esPasado) recs.push(`Este es el análisis de tu año <strong>${anio}</strong> cerrado. Úsalo como base para planificar ${anio+1}.`);
+  }
+  document.getElementById('recomendaciones').innerHTML=recs.map(r=>`<div class="rec">${r}</div>`).join('')||'<div class="empty-state">Sin recomendaciones aún.</div>';
+
+  // Alertas
+  const alertas=[];
+  const tramo=getTramo(rentaAnual);
+  if(tramo.siguiente&&tramo.siguiente.h!==Infinity){
+    const dist=tramo.siguiente.d-rentaAnual;
+    if(dist>0&&dist<6000000) alertas.push({tipo:'warning',txt:`Estás a <strong>${fmt(dist)}</strong> de cambiar al tramo del ${pct(tramo.siguiente.t)}. Un APV estratégico puede evitarlo.`});
+  }
+  if(totalActual>0&&retenidoActual===0) alertas.push({tipo:'danger',txt:`Ningún mes tiene retención registrada. Reserva al menos <strong>${fmt(impFinal)}</strong> para no tener sorpresas en abril.`});
+  if(!esPasado&&mesesRest<=2&&impFinal>0) alertas.push({tipo:'warning',txt:`Quedan pocos meses para cerrar el año. El plazo límite para APV es el <strong>31 de diciembre</strong>.`});
+  alertas.push({tipo:'info',txt:`Declaración de renta: <strong>abril ${anio+1}</strong>. Plazo APV: <strong>31 de diciembre ${anio}</strong>.`});
+  document.getElementById('alertas').innerHTML=alertas.map(a=>`<div class="alerta ${a.tipo}">${a.txt}</div>`).join('')||'<div class="empty-state">Sin alertas.</div>';
+}
+
+// ── Navegación ────────────────────────────────────
+function switchTab(tab){
+  document.getElementById('tab-ingresos').style.display=tab==='ingresos'?'block':'none';
+  document.getElementById('tab-proyeccion').style.display=tab==='proyeccion'?'block':'none';
+  document.getElementById('tab-btn-ingresos').className='tab'+(tab==='ingresos'?' active':'');
+  document.getElementById('tab-btn-proyeccion').className='tab'+(tab==='proyeccion'?' active':'');
+  if(tab==='proyeccion'){
+    renderProjTable();
+    renderTimeline();
+    recalcular();
+  }
+}
+
+// ── Init ──────────────────────────────────────────
 recalcular();
 </script>
 </body>
