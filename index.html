@@ -167,6 +167,10 @@ canvas{width:100%!important}
 .month-val{display:block;font-size:12px;color:var(--text);font-weight:500}
 .month-cell.has-data .month-val{color:var(--accent)}
 .month-cell.empty .month-val{color:var(--border)}
+.month-ret-dot{display:block;width:5px;height:5px;border-radius:50%;margin:4px auto 0;background:transparent}
+.month-cell.ret-full .month-ret-dot{background:var(--success)}
+.month-cell.ret-partial .month-ret-dot{background:var(--warning)}
+.month-cell.ret-none .month-ret-dot{background:var(--danger)}
 
 /* ── MANUAL TABLE ───────────────────────────────── */
 .manual-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
@@ -278,7 +282,7 @@ canvas{width:100%!important}
         <div class="months-grid" id="months-grid"></div>
         <div class="metrics" style="margin-bottom:0;grid-template-columns:repeat(2,1fr)">
           <div class="metric"><p class="metric-label">Renta bruta anual <i class="info-icon" data-tooltip="Total de honorarios brutos emitidos durante el año, según el informe del SII. Es la base sobre la que se calculan impuestos y cotizaciones.">i</i></p><p class="metric-value accent" id="loaded-total-bruto">$0</p></div>
-          <div class="metric"><p class="metric-label">Ya retenido <i class="info-icon" data-tooltip="Lo que tus clientes retuvieron y pagaron al SII en tu nombre (13,75% por cada boleta con retención). Es un anticipo de tu impuesto anual.">i</i></p><p class="metric-value success" id="loaded-total-ret">$0</p><p style="font-size:10px;color:var(--muted);margin-top:3px">por tus clientes</p></div>
+          <div class="metric"><p class="metric-label">Ya retenido <i class="info-icon" data-tooltip="Lo que tus pagadores (hospitales, clínicas, empresas) retuvieron y pagaron al SII en tu nombre (13,75% por cada boleta con retención). Es un anticipo de tu impuesto anual. Si algún mes trabajaste sin retención, el porcentaje efectivo baja.">i</i></p><p class="metric-value success" id="loaded-total-ret">$0</p><p style="font-size:10px;color:var(--muted);margin-top:3px" id="loaded-ret-subtitle">por tus pagadores</p></div>
           <div class="metric"><p class="metric-label">Cotizaciones estimadas <i class="info-icon" data-tooltip="AFP + salud obligatoria. Se calcula como 17% sobre el 80% de tu renta bruta (base imponible presunta). No se descuentan mes a mes: se pagan junto con el impuesto en la operación renta de abril.">i</i></p><p class="metric-value warning" id="loaded-cotizaciones">$0</p><p style="font-size:10px;color:var(--muted);margin-top:3px">AFP + salud · 17% × 80%</p></div>
           <div class="metric"><p class="metric-label" id="loaded-resultado-label">Resultado estimado <i class="info-icon" data-tooltip="Retenciones acumuladas menos impuesto a la renta estimado menos cotizaciones. Verde = devolución en abril. Rojo = deuda a pagar. Cálculo simplificado sin APV; el análisis completo está en la pestaña 2.">i</i></p><p class="metric-value" id="loaded-resultado">—</p><p style="font-size:10px;color:var(--muted);margin-top:3px;line-height:1.5" id="loaded-resultado-formula"></p></div>
         </div>
@@ -569,9 +573,10 @@ function mostrarEstadoCargado(){
   // Grid mensual
   const grid=document.getElementById('months-grid');
   grid.innerHTML=mesesActuales.map((m,i)=>`
-    <div class="month-cell ${m.bruto>0?'has-data':'empty'}">
+    <div class="month-cell ${m.bruto>0?'has-data':'empty'} ${m.bruto>0?(m.retencion>=m.bruto*0.13?'ret-full':m.retencion>0?'ret-partial':'ret-none'):''}">
       <span class="month-name">${MESES[i]}</span>
       <span class="month-val">${m.bruto>0?fmtM(m.bruto):'—'}</span>
+      ${m.bruto>0?'<span class="month-ret-dot"></span>':''}
     </div>`).join('');
 
   // Totales
@@ -580,6 +585,13 @@ function mostrarEstadoCargado(){
   const mesesActivos=mesesActuales.filter(m=>m.bruto>0).length;
   document.getElementById('loaded-total-bruto').textContent=fmt(totalBruto);
   document.getElementById('loaded-total-ret').textContent=fmt(totalRet);
+  // Porcentaje efectivo de retención
+  if(totalBruto>0){
+    const pctEfectivo=(totalRet/totalBruto*100);
+    const pctColor=pctEfectivo>=12?'var(--muted)':pctEfectivo>0?'var(--warning)':'var(--danger)';
+    document.getElementById('loaded-ret-subtitle').innerHTML=
+      'por tus pagadores · <span style="color:'+pctColor+'">'+pctEfectivo.toFixed(1)+'% efectivo</span>';
+  }
   // Cotizaciones + Resultado estimado (impuesto base + cotizaciones, sin APV)
   if(totalBruto>0){
     const impEst=Math.round(calcImpuesto(totalBruto));
