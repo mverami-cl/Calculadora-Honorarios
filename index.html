@@ -274,9 +274,9 @@ canvas{width:100%!important}
         <p class="card-label">Resumen mensual — Honorario bruto</p>
         <div class="months-grid" id="months-grid"></div>
         <div class="metrics" style="margin-bottom:0">
-          <div class="metric"><p class="metric-label">Total bruto</p><p class="metric-value accent" id="loaded-total-bruto">$0</p></div>
-          <div class="metric"><p class="metric-label">Retenido (terceros)</p><p class="metric-value success" id="loaded-total-ret">$0</p></div>
-          <div class="metric"><p class="metric-label">Meses con actividad</p><p class="metric-value" id="loaded-meses">0</p></div>
+          <div class="metric"><p class="metric-label">Renta bruta anual</p><p class="metric-value accent" id="loaded-total-bruto">$0</p></div>
+          <div class="metric"><p class="metric-label">Ya retenido</p><p class="metric-value success" id="loaded-total-ret">$0</p><p style="font-size:10px;color:var(--muted);margin-top:3px">por tus clientes</p></div>
+          <div class="metric"><p class="metric-label" id="loaded-resultado-label">Resultado estimado</p><p class="metric-value" id="loaded-resultado">—</p><p style="font-size:10px;color:var(--muted);margin-top:3px;line-height:1.5" id="loaded-resultado-formula"></p></div>
         </div>
       </div>
 
@@ -576,7 +576,19 @@ function mostrarEstadoCargado(){
   const mesesActivos=mesesActuales.filter(m=>m.bruto>0).length;
   document.getElementById('loaded-total-bruto').textContent=fmt(totalBruto);
   document.getElementById('loaded-total-ret').textContent=fmt(totalRet);
-  document.getElementById('loaded-meses').textContent=mesesActivos;
+  // Resultado estimado (cálculo base sin APV ni cotizaciones, solo para validación rápida)
+  if(totalBruto>0){
+    const impEst=Math.round(calcImpuesto(totalBruto));
+    const resultEst=totalRet-impEst;
+    const esDevol=resultEst>=0;
+    const resultEl=document.getElementById('loaded-resultado');
+    const resultLabel=document.getElementById('loaded-resultado-label');
+    const resultFormula=document.getElementById('loaded-resultado-formula');
+    resultEl.textContent=fmt(Math.abs(resultEst));
+    resultEl.className='metric-value '+(esDevol?'success':'danger');
+    resultLabel.textContent=esDevol?'Devolución estimada':'Deuda estimada';
+    resultFormula.textContent='Ret. '+fmt(totalRet)+' − Imp. '+fmt(impEst);
+  }
 
   hideUploadError();
   recalcular();
