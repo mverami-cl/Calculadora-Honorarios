@@ -301,7 +301,7 @@ input[type=number]:focus{border-color:var(--accent)}
         <p class="hero-formula" id="hero-formula"></p>
       </div>
       <hr class="hero-divider"/>
-      <div class="metrics" style="margin-bottom:0;grid-template-columns:repeat(3,1fr)">
+      <div class="metrics" id="metrics-secondary" style="margin-bottom:0;grid-template-columns:repeat(3,1fr)">
         <div class="metric">
           <p class="metric-label">Impuesto estimado</p>
           <p class="metric-value" id="r-imp">$0</p>
@@ -311,7 +311,7 @@ input[type=number]:focus{border-color:var(--accent)}
           <p class="metric-value warning" id="r-cot">$0</p>
           <p style="font-size:10px;color:var(--muted);margin-top:2px">AFP + salud</p>
         </div>
-        <div class="metric">
+        <div class="metric" id="metric-guardar">
           <p class="metric-label">Guardar al mes</p>
           <p class="metric-value" id="r-mes">—</p>
         </div>
@@ -751,10 +751,12 @@ function recalcular(){
   const ahorroAPV=impSinAPV-impConAPV;
   const bonusAPV=Math.min(apv*0.15,680000);
   const cotizaciones=Math.round(rentaAnual*0.8*0.17);
-  const impFinal=Math.max(0,impConAPV-retenidoActual);
-  const devolucion=retenidoActual>impConAPV?retenidoActual-impConAPV:0;
+  // Saldo correcto: ret − imp − cot (los tres componentes)
+  const saldo=retenidoActual-impConAPV-cotizaciones;
+  const devolucion=Math.max(0,saldo);
+  const deuda=Math.max(0,-saldo);
   const mesesRest=esPasado?0:(11-mesActual);
-  const guardarMes=mesesRest>0?Math.round((impFinal+cotizaciones)/mesesRest):0;
+  const guardarMes=mesesRest>0&&deuda>0?Math.round(deuda/mesesRest):0;
 
   // Proyección card
   document.getElementById('proj-card').style.display=esPasado?'none':'block';
@@ -763,17 +765,18 @@ function recalcular(){
   const heroValue=document.getElementById('hero-value');
   const heroLabel=document.getElementById('hero-label');
   const heroFormula=document.getElementById('hero-formula');
+  const formula=`Ret. ${fmt(retenidoActual)} − Imp. ${fmt(impConAPV)} − Cot. ${fmt(cotizaciones)}`;
   if(rentaAnual===0){
     heroValue.textContent='—'; heroValue.className='hero-value neutral';
     heroLabel.textContent='Sin datos aún'; heroFormula.textContent='';
   } else if(devolucion>0){
     heroValue.textContent=fmt(devolucion); heroValue.className='hero-value success';
     heroLabel.textContent='El SII te devuelve en abril';
-    heroFormula.textContent=`Ret. ${fmt(retenidoActual)} − Imp. ${fmt(impConAPV)} − Cot. ${fmt(cotizaciones)}`;
-  } else if(impFinal>0){
-    heroValue.textContent=fmt(impFinal); heroValue.className='hero-value danger';
+    heroFormula.textContent=formula;
+  } else if(deuda>0){
+    heroValue.textContent=fmt(deuda); heroValue.className='hero-value danger';
     heroLabel.textContent='A pagar al SII en abril';
-    heroFormula.textContent=`Ret. ${fmt(retenidoActual)} − Imp. ${fmt(impConAPV)} − Cot. ${fmt(cotizaciones)}`;
+    heroFormula.textContent=formula;
   } else {
     heroValue.textContent='$0'; heroValue.className='hero-value neutral';
     heroLabel.textContent='Sin deuda estimada'; heroFormula.textContent='';
@@ -784,11 +787,21 @@ function recalcular(){
   rImp.textContent=fmt(impConAPV);
   rImp.className='metric-value'+(impConAPV>0?' danger':'');
   document.getElementById('r-cot').textContent=fmt(cotizaciones);
-  document.getElementById('r-mes').textContent=guardarMes>0?fmt(guardarMes):'—';
+  // "Guardar al mes" solo aplica para año en curso
+  const metricGuardar=document.getElementById('metric-guardar');
+  const metricsSecondary=document.getElementById('metrics-secondary');
+  if(esPasado){
+    metricGuardar.style.display='none';
+    metricsSecondary.style.gridTemplateColumns='repeat(2,1fr)';
+  } else {
+    metricGuardar.style.display='block';
+    metricsSecondary.style.gridTemplateColumns='repeat(3,1fr)';
+    document.getElementById('r-mes').textContent=guardarMes>0?fmt(guardarMes):'—';
+  }
 
   renderTramoVisual(rentaAnual);
   renderApvImpact(rentaAnual,apv,impSinAPV,impConAPV,ahorroAPV,bonusAPV);
-  renderTakeaways(rentaAnual,retenidoActual,impFinal,devolucion,apv,ahorroAPV,bonusAPV,guardarMes,mesesRest);
+  renderTakeaways(rentaAnual,retenidoActual,deuda,devolucion,apv,ahorroAPV,bonusAPV,guardarMes,mesesRest);
 }
 
 // ── Navegación ────────────────────────────────────
