@@ -308,7 +308,7 @@ input[type=number]:focus{border-color:var(--accent)}
           <p class="metric-value danger" id="r-imp">$0</p>
         </div>
         <div class="metric">
-          <p class="metric-label">Cotizaciones <i class="info-icon" data-tooltip="AFP + salud obligatoria. Para independientes en boleta se pagan en abril junto con el impuesto. Se estiman como 17% sobre el 80% de tu renta bruta.">i</i></p>
+          <p class="metric-label">Cotizaciones <i class="info-icon" id="cot-info" data-tooltip="AFP + salud obligatoria. Se pagan en abril junto al impuesto. La Ley 21.133 establece una base previsional gradual por año. Tasa estimada: 17%.">i</i></p>
           <p class="metric-value warning" id="r-cot">$0</p>
         </div>
       </div>
@@ -325,12 +325,17 @@ input[type=number]:focus{border-color:var(--accent)}
     <!-- APV SIMULADOR -->
     <div class="card">
       <p class="card-label" id="apv-card-label">APV voluntario</p>
+      <div class="toggle-wrap" style="margin-bottom:0.75rem">
+        <button class="toggle-btn active" id="tog-apv-a" onclick="setApvRegimen('A')">Régimen A · Con bono estado</button>
+        <button class="toggle-btn" id="tog-apv-b" onclick="setApvRegimen('B')">Régimen B · Deducción pura</button>
+      </div>
       <div id="apv-hint" style="font-size:12px;color:var(--muted);margin-bottom:0.75rem;line-height:1.5"></div>
       <div id="apv-bajar-tramo" style="display:none;margin-bottom:0.85rem"></div>
       <div class="avg-input-wrap">
         <label id="apv-input-label">Monto a depositar antes del 31 de diciembre</label>
         <input type="number" id="apv-input" value="0" min="0" step="100000" oninput="recalcular()" placeholder="0"/>
       </div>
+      <div id="apv-tope" style="font-size:12px;color:var(--muted);margin-top:4px;margin-bottom:0.5rem"></div>
       <div id="apv-impact"></div>
     </div>
 
@@ -356,6 +361,18 @@ const TRAMOS_POR_ANIO = {
   2024:[{d:0,h:8787408,t:0},{d:8787408,h:19527552,t:.04},{d:19527552,h:32545920,t:.08},{d:32545920,h:45564288,t:.135},{d:45564288,h:58582656,t:.23},{d:58582656,h:78110208,t:.304},{d:78110208,h:Infinity,t:.35}],
 };
 
+// Gradualidad base previsional Ley 21.133 (% de renta bruta = base de cotización AFP+salud)
+const BASE_PREVISIONAL = {2024:0.80, 2025:0.90}; // 2026+ = 1.00 (cobertura total)
+
+// UF promedio referencial por año tributario (para convertir topes a pesos corrientes)
+const UF_POR_ANIO = {2024:37234, 2025:38897, 2026:39800};
+
+// Tope APV legal = 600 UF/año (ambos regímenes A y B)
+const APV_TOPE_UF = 600;
+
+// Tope bono estatal Régimen A ≈ 10 UTM/año (verificar en SII según UTM vigente de cada año)
+const BONUS_CAP_POR_ANIO = {2024:649450, 2025:684720, 2026:712540};
+
 // ── Estado global ─────────────────────────────────
 let mesesActuales = Array(12).fill(null).map(()=>({bruto:0,retencion:0}));
 let mesesRetManual= Array(12).fill(true);
@@ -365,6 +382,7 @@ let anio          = new Date().getFullYear();
 let mesActual     = new Date().getMonth();
 let esPasado      = false;
 let dataSource    = null;
+let apvRegimen    = 'A'; // 'A' = bono estado 15% | 'B' = deducción pura sin bono
 
 // ── Helpers ───────────────────────────────────────
 function fmt(n){ return '$'+Math.round(n).toLocaleString('es-CL'); }
@@ -691,14 +709,14 @@ function renderApvImpact(rentaAnual,apv,impSinAPV,impConAPV,ahorroAPV,bonusAPV){
         <p class="apv-col-imp danger">${fmt(impSinAPV)}</p>
       </div>
       <div class="apv-col highlight">
-        <p class="apv-col-title">Con APV ${fmtM(apv)}</p>
+        <p class="apv-col-title">Con APV ${fmtM(apv)} · Reg. ${apvRegimen}</p>
         <p class="apv-col-tramo">Tramo ${fmtTasa(tramos[idxCon].t)} ${bajaDeTramo?'<span class="apv-badge">↓ baja de tramo</span>':''}</p>
         <p class="apv-col-imp" style="color:var(--success)">${fmt(impConAPV)}</p>
       </div>
     </div>
     <div class="apv-totals">
       <div class="apv-total-row"><span>Ahorro en impuesto</span><span>${fmt(ahorroAPV)}</span></div>
-      <div class="apv-total-row"><span>Bonus estado 15%</span><span>${fmt(bonusAPV)}</span></div>
+      ${apvRegimen==='A'?`<div class="apv-total-row"><span>Bonus estado 15%</span><span>${fmt(bonusAPV)}</span></div>`:''}
       <div class="apv-total-row total-highlight"><span>Beneficio total</span><span>► ${fmt(beneficioTotal)}</span></div>
     </div>
   `;
@@ -717,10 +735,14 @@ function renderTakeaways(rentaAnual,retenidoActual,impFinal,devolucion,apv,ahorr
     if(apv===0&&impFinal>0){
       const apvSug=Math.min(Math.round(rentaAnual*0.1/100000)*100000,4000000);
       const ah=calcImpuesto(rentaAnual)-calcImpuesto(Math.max(0,rentaAnual-apvSug));
-      items.push({tipo:'warning',txt:`Considera depositar <strong>${fmt(apvSug)} en APV</strong> antes del 31 de diciembre. Ahorrarías <strong>${fmt(ah)}</strong> en impuestos más la bonificación estatal del 15%.`});
+      items.push({tipo:'warning',txt:`Considera depositar <strong>${fmt(apvSug)} en APV Régimen A</strong> antes del 31 de diciembre. Ahorrarías <strong>${fmt(ah)}</strong> en impuestos más la bonificación estatal del 15%.`});
     }
-    if(apv>0)
-      items.push({tipo:'success',txt:`Con tu APV de <strong>${fmt(apv)}</strong>, ahorras <strong>${fmt(ahorroAPV)}</strong> en impuestos${bonusAPV>0?` más <strong>${fmt(bonusAPV)}</strong> de bonificación estatal`:''}.`});
+    if(apv>0){
+      if(apvRegimen==='A')
+        items.push({tipo:'success',txt:`Con tu APV Régimen A de <strong>${fmt(apv)}</strong>, ahorras <strong>${fmt(ahorroAPV)}</strong> en impuestos${bonusAPV>0?` más <strong>${fmt(bonusAPV)}</strong> de bonificación estatal`:''}.`});
+      else
+        items.push({tipo:'success',txt:`Con tu APV Régimen B de <strong>${fmt(apv)}</strong>, ahorras <strong>${fmt(ahorroAPV)}</strong> en impuestos (deducción directa de renta imponible, sin bono estatal).`});
+    }
     const tramoInfo=getTramo(rentaAnual);
     if(tramoInfo.siguiente&&tramoInfo.siguiente.h!==Infinity){
       const dist=tramoInfo.siguiente.d-rentaAnual;
@@ -736,6 +758,14 @@ function renderTakeaways(rentaAnual,retenidoActual,impFinal,devolucion,apv,ahorr
   document.getElementById('takeaways').innerHTML=items.map(item=>`<div class="alerta ${item.tipo}">${item.txt}</div>`).join('');
 }
 
+// ── Régimen APV ───────────────────────────────────
+function setApvRegimen(reg){
+  apvRegimen=reg;
+  document.getElementById('tog-apv-a').className='toggle-btn'+(reg==='A'?' active':'');
+  document.getElementById('tog-apv-b').className='toggle-btn'+(reg==='B'?' active':'');
+  recalcular();
+}
+
 // ── Recalcular ────────────────────────────────────
 function recalcular(){
   const totalActual=mesesActuales.reduce((s,m)=>s+m.bruto,0);
@@ -749,8 +779,10 @@ function recalcular(){
   const impSinAPV=calcImpuesto(rentaAnual);
   const impConAPV=calcImpuesto(rentaConAPV);
   const ahorroAPV=impSinAPV-impConAPV;
-  const bonusAPV=Math.min(apv*0.15,680000);
-  const cotizaciones=Math.round(rentaAnual*0.8*0.17);
+  const bonusCap=BONUS_CAP_POR_ANIO[anio]??712540;
+  const bonusAPV=apvRegimen==='A'?Math.min(apv*0.15,bonusCap):0;
+  const basePrevisional=BASE_PREVISIONAL[anio]??1.00;
+  const cotizaciones=Math.round(rentaAnual*basePrevisional*0.17);
   // Saldo correcto: ret − imp − cot (los tres componentes)
   const saldo=retenidoActual-impConAPV-cotizaciones;
   const devolucion=Math.max(0,saldo);
@@ -785,22 +817,44 @@ function recalcular(){
   rImp.className='metric-value'+(impConAPV>0?' danger':'');
   document.getElementById('r-cot').textContent=fmt(cotizaciones);
 
-  // APV card: contexto dinámico según año cerrado/en curso
+  // APV card: contexto dinámico según régimen y año cerrado/en curso
   const tramos=TRAMOS_POR_ANIO[anio]||TRAMOS_POR_ANIO[2025];
   const activeIdx=getTramoIdx(rentaAnual);
   const apvCardLabel=document.getElementById('apv-card-label');
   const apvHint=document.getElementById('apv-hint');
   const apvInputLabel=document.getElementById('apv-input-label');
   const apvBajarTramo=document.getElementById('apv-bajar-tramo');
+  const apvTopeEl=document.getElementById('apv-tope');
+  const ufAnio=UF_POR_ANIO[anio]??39800;
+  const topeAPVPesos=Math.round(APV_TOPE_UF*ufAnio);
 
   if(esPasado){
     apvCardLabel.textContent=`Simulación APV — ¿cuánto habrías ahorrado en ${anio}?`;
     apvInputLabel.textContent=`Si hubieras depositado antes del 31 de dic. de ${anio}`;
-    apvHint.textContent='Régimen A: el Estado bonifica un 15% adicional (tope ~$680.000/año). Lo depositado reduce tu renta imponible.';
   } else {
     apvCardLabel.textContent='APV voluntario — ¿cuánto te conviene depositar?';
     apvInputLabel.textContent='Monto a depositar antes del 31 de diciembre';
-    apvHint.textContent='Régimen A: el Estado bonifica un 15% adicional (tope ~$680.000/año). Lo depositado reduce tu renta imponible.';
+  }
+
+  if(apvRegimen==='A'){
+    apvHint.innerHTML=`<strong>Régimen A:</strong> el Estado bonifica un 15% adicional sobre lo depositado (tope ${fmt(bonusCap)}/año). Lo depositado también reduce tu renta imponible.`;
+  } else {
+    const tasaMarginal=fmtTasa(tramos[activeIdx].t);
+    apvHint.innerHTML=`<strong>Régimen B:</strong> sin bono estatal, pero lo depositado reduce directamente tu renta imponible. Ahorro = tu tasa marginal (${tasaMarginal}) × monto. Puede convenir más si estás en tramo ≥ 23%.`;
+  }
+
+  // Tope APV en UF
+  if(apvTopeEl){
+    const apvVal=Math.max(0,+(document.getElementById('apv-input')?.value||0));
+    const alertaTope=apvVal>topeAPVPesos?` <span style="color:var(--warning)">⚠ excedes el tope legal</span>`:'';
+    apvTopeEl.innerHTML=`Tope legal: <strong>${APV_TOPE_UF} UF</strong> ≈ ${fmt(topeAPVPesos)}/año · UF ${anio} ref. $${ufAnio.toLocaleString('es-CL')}${alertaTope}`;
+  }
+
+  // Tooltip cotizaciones dinámico
+  const cotInfoEl=document.getElementById('cot-info');
+  if(cotInfoEl){
+    const basePct=Math.round(basePrevisional*100);
+    cotInfoEl.setAttribute('data-tooltip',`AFP + salud obligatoria. Se pagan en abril junto al impuesto. Ley 21.133: base previsional gradual, ${basePct}% de renta bruta en ${anio}. Tasa estimada: 17%.`);
   }
 
   // Insight "bajar de tramo"
