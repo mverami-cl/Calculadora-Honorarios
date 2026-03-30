@@ -180,7 +180,7 @@ input[type=number]:focus{border-color:var(--accent)}
 <div class="container">
   <div class="tabs">
     <button class="tab active" id="tab-btn-ingresos" onclick="switchTab('ingresos')">① Ingresos</button>
-    <button class="tab" id="tab-btn-proyeccion" onclick="switchTab('proyeccion')">② Proyección + Resultado</button>
+    <button class="tab" id="tab-btn-proyeccion" onclick="switchTab('proyeccion')">② Resultado</button>
   </div>
 
   <!-- ══════════════════════════════════════
@@ -239,11 +239,9 @@ input[type=number]:focus{border-color:var(--accent)}
         <div class="metrics" style="margin-bottom:0;grid-template-columns:repeat(2,1fr)">
           <div class="metric"><p class="metric-label">Renta bruta anual <i class="info-icon" data-tooltip="Total de honorarios brutos emitidos durante el año, según el informe del SII. Es la base sobre la que se calculan impuestos y cotizaciones.">i</i></p><p class="metric-value accent" id="loaded-total-bruto">$0</p></div>
           <div class="metric"><p class="metric-label">Ya retenido <i class="info-icon" data-tooltip="Lo que tus pagadores retuvieron y pagaron al SII en tu nombre (13,75% por boleta con retención). Es un anticipo de tu impuesto anual.">i</i></p><p class="metric-value success" id="loaded-total-ret">$0</p><p style="font-size:10px;color:var(--muted);margin-top:3px" id="loaded-ret-subtitle">por tus pagadores</p></div>
-          <div class="metric"><p class="metric-label">Cotizaciones estimadas <i class="info-icon" data-tooltip="AFP + salud obligatoria. 17% sobre el 80% de tu renta bruta. Se pagan junto con el impuesto en la operación renta de abril.">i</i></p><p class="metric-value warning" id="loaded-cotizaciones">$0</p><p style="font-size:10px;color:var(--muted);margin-top:3px">AFP + salud · 17% × 80%</p></div>
-          <div class="metric"><p class="metric-label" id="loaded-resultado-label">Resultado estimado <i class="info-icon" data-tooltip="Estimación base: retenciones − impuesto a la renta − cotizaciones. Puede cambiar si haces APV o si tus ingresos reales difieren de lo proyectado.">i</i></p><p class="metric-value" id="loaded-resultado">—</p><p style="font-size:10px;color:var(--muted);margin-top:3px;line-height:1.5" id="loaded-resultado-formula"></p></div>
         </div>
       </div>
-      <button class="btn-primary full-width" onclick="switchTab('proyeccion')">Ver proyección y resultado →</button>
+      <button class="btn-primary full-width" onclick="switchTab('proyeccion')">Ver resultado →</button>
     </div>
 
     <!-- ESTADO: MANUAL -->
@@ -298,22 +296,20 @@ input[type=number]:focus{border-color:var(--accent)}
       <div class="hero-result">
         <p class="hero-label" id="hero-label">Sin datos aún</p>
         <p class="hero-value neutral" id="hero-value">—</p>
-        <p class="hero-formula" id="hero-formula"></p>
       </div>
       <hr class="hero-divider"/>
       <div class="metrics" id="metrics-secondary" style="margin-bottom:0;grid-template-columns:repeat(3,1fr)">
         <div class="metric">
-          <p class="metric-label">Impuesto estimado</p>
-          <p class="metric-value" id="r-imp">$0</p>
+          <p class="metric-label">Retenciones <i class="info-icon" data-tooltip="Lo que tus pagadores (hospitales, clínicas, empresas) ya entregaron al SII en tu nombre durante el año. Es tu principal anticipo de impuesto.">i</i></p>
+          <p class="metric-value success" id="r-ret">$0</p>
         </div>
         <div class="metric">
-          <p class="metric-label">Cotizaciones</p>
-          <p class="metric-value warning" id="r-cot">$0</p>
-          <p style="font-size:10px;color:var(--muted);margin-top:2px">AFP + salud</p>
+          <p class="metric-label">Impuesto <i class="info-icon" data-tooltip="Lo que el SII calcula que debes pagar según tu renta anual y tramo tributario. Se descuenta lo que ya fue retenido.">i</i></p>
+          <p class="metric-value danger" id="r-imp">$0</p>
         </div>
-        <div class="metric" id="metric-guardar">
-          <p class="metric-label">Guardar al mes</p>
-          <p class="metric-value" id="r-mes">—</p>
+        <div class="metric">
+          <p class="metric-label">Cotizaciones <i class="info-icon" data-tooltip="AFP + salud obligatoria. Para independientes en boleta se pagan en abril junto con el impuesto. Se estiman como 17% sobre el 80% de tu renta bruta.">i</i></p>
+          <p class="metric-value warning" id="r-cot">$0</p>
         </div>
       </div>
     </div>
@@ -328,12 +324,13 @@ input[type=number]:focus{border-color:var(--accent)}
 
     <!-- APV SIMULADOR -->
     <div class="card">
-      <p class="card-label">APV voluntario</p>
+      <p class="card-label" id="apv-card-label">APV voluntario</p>
+      <div id="apv-hint" style="font-size:12px;color:var(--muted);margin-bottom:0.75rem;line-height:1.5"></div>
+      <div id="apv-bajar-tramo" style="display:none;margin-bottom:0.85rem"></div>
       <div class="avg-input-wrap">
-        <label>Monto a depositar antes del 31 de diciembre</label>
+        <label id="apv-input-label">Monto a depositar antes del 31 de diciembre</label>
         <input type="number" id="apv-input" value="0" min="0" step="100000" oninput="recalcular()" placeholder="0"/>
       </div>
-      <p style="font-size:12px;color:var(--muted);margin-top:8px">Régimen A: el Estado bonifica un 15% adicional (tope ~$680.000/año). Lo depositado reduce tu renta imponible.</p>
       <div id="apv-impact"></div>
     </div>
 
@@ -502,16 +499,6 @@ function mostrarEstadoCargado(){
     const pctEfectivo=totalRet/totalBruto*100;
     const pctColor=pctEfectivo>=12?'var(--muted)':pctEfectivo>0?'var(--warning)':'var(--danger)';
     document.getElementById('loaded-ret-subtitle').innerHTML='por tus pagadores · <span style="color:'+pctColor+'">'+pctEfectivo.toFixed(1)+'% efectivo</span>';
-    const impEst=calcImpuesto(totalBruto);
-    const cotEst=Math.round(totalBruto*0.8*0.17);
-    const resultEst=totalRet-impEst-cotEst;
-    const esDevol=resultEst>=0;
-    document.getElementById('loaded-cotizaciones').textContent=fmt(cotEst);
-    const resultEl=document.getElementById('loaded-resultado');
-    resultEl.textContent=fmt(Math.abs(resultEst));
-    resultEl.className='metric-value '+(esDevol?'success':'danger');
-    document.getElementById('loaded-resultado-label').textContent=esDevol?'Devolución estimada':'Deuda estimada';
-    document.getElementById('loaded-resultado-formula').textContent='Ret. '+fmt(totalRet)+' − Imp. '+fmt(impEst)+' − Cot. '+fmt(cotEst);
   }
   hideUploadError();
   recalcular();
@@ -659,6 +646,8 @@ function renderTramoVisual(rentaAnual){
     </div>`;
   }).join('');
 
+  const tasaEfectiva=rentaAnual>0?(calcImpuesto(rentaAnual)/rentaAnual*100):0;
+
   container.innerHTML=`
     <div class="tramo-ruler">
       <div class="tramo-segments">${segsHTML}</div>
@@ -667,7 +656,18 @@ function renderTramoVisual(rentaAnual){
         <div class="tramo-marker-label">${fmtM(rentaAnual)} · ${tramoLabel}</div>
       </div>
     </div>
-    <p class="tramo-description">Tu renta de <strong>${fmt(rentaAnual)}</strong> cae en el ${tramoLabel}. Solo el ingreso por sobre el umbral de cada tramo tributa a esa tasa — no el total.</p>
+    <div style="display:flex;gap:8px;margin-top:0.75rem">
+      <div style="flex:1;background:var(--surface2);border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:0.65rem 0.85rem">
+        <p style="font-size:10px;color:var(--muted);font-weight:500;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:3px">Tasa marginal</p>
+        <p style="font-size:18px;font-weight:500;color:var(--text)">${fmtTasa(tramos[activeIdx].t)}</p>
+        <p style="font-size:11px;color:var(--muted);margin-top:2px">El tramo más alto que alcanzas. Solo el ingreso dentro de ese tramo tributa a esta tasa.</p>
+      </div>
+      <div style="flex:1;background:var(--surface2);border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:0.65rem 0.85rem">
+        <p style="font-size:10px;color:var(--muted);font-weight:500;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:3px">Tasa efectiva</p>
+        <p style="font-size:18px;font-weight:500;color:var(--text)">${tasaEfectiva.toFixed(1)}%</p>
+        <p style="font-size:11px;color:var(--muted);margin-top:2px">Lo que realmente pagas sobre el total de tu renta (impuesto ÷ renta bruta).</p>
+      </div>
+    </div>
   `;
 }
 
@@ -764,39 +764,57 @@ function recalcular(){
   // Hero
   const heroValue=document.getElementById('hero-value');
   const heroLabel=document.getElementById('hero-label');
-  const heroFormula=document.getElementById('hero-formula');
-  const formula=`Ret. ${fmt(retenidoActual)} − Imp. ${fmt(impConAPV)} − Cot. ${fmt(cotizaciones)}`;
   if(rentaAnual===0){
     heroValue.textContent='—'; heroValue.className='hero-value neutral';
-    heroLabel.textContent='Sin datos aún'; heroFormula.textContent='';
+    heroLabel.textContent='Sin datos aún';
   } else if(devolucion>0){
     heroValue.textContent=fmt(devolucion); heroValue.className='hero-value success';
     heroLabel.textContent='El SII te devuelve en abril';
-    heroFormula.textContent=formula;
   } else if(deuda>0){
     heroValue.textContent=fmt(deuda); heroValue.className='hero-value danger';
     heroLabel.textContent='A pagar al SII en abril';
-    heroFormula.textContent=formula;
   } else {
     heroValue.textContent='$0'; heroValue.className='hero-value neutral';
-    heroLabel.textContent='Sin deuda estimada'; heroFormula.textContent='';
+    heroLabel.textContent='Sin deuda estimada';
   }
 
-  // Métricas secundarias
+  // Métricas secundarias: Retenciones | Impuesto | Cotizaciones
+  document.getElementById('r-ret').textContent=fmt(retenidoActual);
   const rImp=document.getElementById('r-imp');
   rImp.textContent=fmt(impConAPV);
   rImp.className='metric-value'+(impConAPV>0?' danger':'');
   document.getElementById('r-cot').textContent=fmt(cotizaciones);
-  // "Guardar al mes" solo aplica para año en curso
-  const metricGuardar=document.getElementById('metric-guardar');
-  const metricsSecondary=document.getElementById('metrics-secondary');
+
+  // APV card: contexto dinámico según año cerrado/en curso
+  const tramos=TRAMOS_POR_ANIO[anio]||TRAMOS_POR_ANIO[2025];
+  const activeIdx=getTramoIdx(rentaAnual);
+  const apvCardLabel=document.getElementById('apv-card-label');
+  const apvHint=document.getElementById('apv-hint');
+  const apvInputLabel=document.getElementById('apv-input-label');
+  const apvBajarTramo=document.getElementById('apv-bajar-tramo');
+
   if(esPasado){
-    metricGuardar.style.display='none';
-    metricsSecondary.style.gridTemplateColumns='repeat(2,1fr)';
+    apvCardLabel.textContent=`Simulación APV — ¿cuánto habrías ahorrado en ${anio}?`;
+    apvInputLabel.textContent=`Si hubieras depositado antes del 31 de dic. de ${anio}`;
+    apvHint.textContent='Régimen A: el Estado bonifica un 15% adicional (tope ~$680.000/año). Lo depositado reduce tu renta imponible.';
   } else {
-    metricGuardar.style.display='block';
-    metricsSecondary.style.gridTemplateColumns='repeat(3,1fr)';
-    document.getElementById('r-mes').textContent=guardarMes>0?fmt(guardarMes):'—';
+    apvCardLabel.textContent='APV voluntario — ¿cuánto te conviene depositar?';
+    apvInputLabel.textContent='Monto a depositar antes del 31 de diciembre';
+    apvHint.textContent='Régimen A: el Estado bonifica un 15% adicional (tope ~$680.000/año). Lo depositado reduce tu renta imponible.';
+  }
+
+  // Insight "bajar de tramo"
+  if(rentaAnual>0&&activeIdx>0){
+    const umbralInferior=tramos[activeIdx].d;
+    const montoParaBajar=rentaAnual-umbralInferior+1;
+    const tramoActual=fmtTasa(tramos[activeIdx].t);
+    const tramoAnterior=fmtTasa(tramos[activeIdx-1].t);
+    const colorBajar=esPasado?'var(--muted)':'var(--accent)';
+    const verboBajar=esPasado?'necesitabas':'necesitas';
+    apvBajarTramo.style.display='block';
+    apvBajarTramo.innerHTML=`<div style="background:var(--surface2);border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:0.75rem 1rem;font-size:12px;color:${colorBajar};line-height:1.6">Para bajar del tramo <strong>${tramoActual}</strong> al <strong>${tramoAnterior}</strong>, ${verboBajar} depositar al menos <strong>${fmt(montoParaBajar)}</strong> en APV.</div>`;
+  } else {
+    apvBajarTramo.style.display='none';
   }
 
   renderTramoVisual(rentaAnual);
