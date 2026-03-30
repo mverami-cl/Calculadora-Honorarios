@@ -738,11 +738,6 @@ function renderTakeaways(rentaAnual,retenidoActual,impFinal,devolucion,apv,ahorr
       items.push({tipo:'success',txt:`Tus retenciones superan el impuesto proyectado. El SII te devolvería <strong>${fmt(devolucion)}</strong> en la operación renta de abril.`});
     if(guardarMes>0)
       items.push({tipo:'info',txt:`Guarda <strong>${fmt(guardarMes)} al mes</strong> durante los próximos ${mesesRest} meses para cubrir impuestos y cotizaciones en abril sin sorpresas.`});
-    if(apv===0&&impFinal>0){
-      const apvSug=Math.min(Math.round(rentaAnual*0.1/100000)*100000,4000000);
-      const ah=calcImpuesto(rentaAnual)-calcImpuesto(Math.max(0,rentaAnual-apvSug));
-      items.push({tipo:'warning',txt:`Considera depositar <strong>${fmt(apvSug)} en APV Régimen A</strong> antes del 31 de diciembre. Ahorrarías <strong>${fmt(ah)}</strong> en impuestos más la bonificación estatal del 15%.`});
-    }
     const tramoInfo=getTramo(rentaAnual);
     if(tramoInfo.siguiente&&tramoInfo.siguiente.h!==Infinity){
       const dist=tramoInfo.siguiente.d-rentaAnual;
