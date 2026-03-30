@@ -241,7 +241,6 @@ input[type=number]:focus{border-color:var(--accent)}
           <div class="metric"><p class="metric-label">Ya retenido <i class="info-icon" data-tooltip="Lo que tus pagadores retuvieron y pagaron al SII en tu nombre (13,75% por boleta con retención). Es un anticipo de tu impuesto anual.">i</i></p><p class="metric-value success" id="loaded-total-ret">$0</p><p style="font-size:10px;color:var(--muted);margin-top:3px" id="loaded-ret-subtitle">por tus pagadores</p></div>
         </div>
       </div>
-      <button class="btn-primary full-width" onclick="switchTab('proyeccion')">Ver resultado →</button>
     </div>
 
     <!-- ESTADO: MANUAL -->
@@ -263,7 +262,39 @@ input[type=number]:focus{border-color:var(--accent)}
         <div class="metric"><p class="metric-label">Retenido acumulado</p><p class="metric-value success" id="m-ret">$0</p></div>
         <div class="metric"><p class="metric-label">Sin retención</p><p class="metric-value warning" id="m-noret">$0</p></div>
       </div>
-      <button class="btn-primary full-width" onclick="switchTab('proyeccion')">Ver proyección y resultado →</button>
+    </div>
+
+    <!-- BLOQUE COMPARTIDO: visible cuando hay datos (cargado o manual) -->
+    <div id="extras-ingresos" style="display:none">
+
+      <!-- Alerta sin retención (solo XLS) -->
+      <div id="alerta-sinret" style="display:none;margin-bottom:1rem"></div>
+
+      <!-- Card opcional: cotizaciones pagadas + APV ya depositado -->
+      <div class="card" style="margin-bottom:1rem">
+        <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer" onclick="toggleOpcionales()">
+          <p class="card-label" style="margin:0">Datos adicionales <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:11px;color:var(--muted)">· opcional</span></p>
+          <span id="opcionales-chevron" style="color:var(--muted);font-size:18px;line-height:1;font-weight:300">+</span>
+        </div>
+        <div id="opcionales-body" style="display:none;margin-top:1rem;display:none">
+          <div class="avg-input-wrap" style="margin-bottom:0.9rem">
+            <div>
+              <label style="display:block;font-size:13px;color:var(--muted);margin-bottom:2px">Cotizaciones ya pagadas este año</label>
+              <span style="font-size:11px;color:var(--muted)">AFP + salud, pagos directos (no via SII)</span>
+            </div>
+            <input type="number" id="cot-pagadas-input" placeholder="0" min="0" step="50000" oninput="updateOpcionales()"/>
+          </div>
+          <div class="avg-input-wrap">
+            <div>
+              <label style="display:block;font-size:13px;color:var(--muted);margin-bottom:2px">APV ya depositado este año</label>
+              <span style="font-size:11px;color:var(--muted)">Se pre-llena en el simulador de Tab ②</span>
+            </div>
+            <input type="number" id="apv-depositado-input" placeholder="0" min="0" step="100000" oninput="updateOpcionales()"/>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-primary full-width" onclick="switchTab('proyeccion')">Ver resultado →</button>
     </div>
   </div>
 
@@ -310,6 +341,7 @@ input[type=number]:focus{border-color:var(--accent)}
         <div class="metric">
           <p class="metric-label">Cotizaciones <i class="info-icon" id="cot-info" data-tooltip="AFP + salud obligatoria. Se pagan en abril junto al impuesto. La Ley 21.133 establece una base previsional gradual por año. Tasa estimada: 17%.">i</i></p>
           <p class="metric-value warning" id="r-cot">$0</p>
+          <p style="font-size:10px;color:var(--muted);margin-top:3px" id="r-cot-sub"></p>
         </div>
       </div>
     </div>
@@ -382,7 +414,9 @@ let anio          = new Date().getFullYear();
 let mesActual     = new Date().getMonth();
 let esPasado      = false;
 let dataSource    = null;
-let apvRegimen    = 'A'; // 'A' = bono estado 15% | 'B' = deducción pura sin bono
+let apvRegimen        = 'A';  // 'A' = bono estado 15% | 'B' = deducción pura sin bono
+let cotizacionesPagadas = 0;  // cotizaciones AFP+salud ya pagadas directamente en el año
+let apvYaDepositado     = 0;  // APV ya depositado este año (pre-llena Tab ②)
 
 // ── Helpers ───────────────────────────────────────
 function fmt(n){ return '$'+Math.round(n).toLocaleString('es-CL'); }
@@ -518,6 +552,19 @@ function mostrarEstadoCargado(){
     const pctColor=pctEfectivo>=12?'var(--muted)':pctEfectivo>0?'var(--warning)':'var(--danger)';
     document.getElementById('loaded-ret-subtitle').innerHTML='por tus pagadores · <span style="color:'+pctColor+'">'+pctEfectivo.toFixed(1)+'% efectivo</span>';
   }
+  // Mostrar bloque compartido (opcional + botón)
+  document.getElementById('extras-ingresos').style.display='block';
+
+  // Alerta honorarios sin retención
+  const totalSinRet=mesesActuales.reduce((s,m)=>s+(m.retencion===0&&m.bruto>0?m.bruto:0),0);
+  const alertaSinRet=document.getElementById('alerta-sinret');
+  if(alertaSinRet&&totalSinRet>0){
+    alertaSinRet.style.display='block';
+    alertaSinRet.innerHTML=`<div class="alerta warning">⚠ <strong>${fmt(totalSinRet)}</strong> en honorarios sin retención del 13,75%. Ningún pagador lo adelantó al SII — ese monto tributa íntegramente en abril y deberás provisionarlo tú.</div>`;
+  } else if(alertaSinRet){
+    alertaSinRet.style.display='none';
+  }
+
   hideUploadError();
   recalcular();
 }
@@ -548,6 +595,7 @@ function mostrarManual(e){
   document.getElementById('estado-upload').style.display='none';
   document.getElementById('estado-cargado').style.display='none';
   document.getElementById('estado-manual').style.display='block';
+  document.getElementById('extras-ingresos').style.display='block';
   renderManualTable(); recalcular();
 }
 
@@ -591,6 +639,13 @@ function resetUpload(){
   document.getElementById('estado-manual').style.display='none';
   document.getElementById('year-pill').style.display='none';
   document.getElementById('file-input').value='';
+  document.getElementById('extras-ingresos').style.display='none';
+  // Limpiar campos opcionales y estado derivado
+  const cotInput=document.getElementById('cot-pagadas-input');
+  const apvDep=document.getElementById('apv-depositado-input');
+  if(cotInput) cotInput.value='';
+  if(apvDep) apvDep.value='';
+  cotizacionesPagadas=0; apvYaDepositado=0;
   hideUploadError(); recalcular();
 }
 
@@ -738,6 +793,10 @@ function renderTakeaways(rentaAnual,retenidoActual,impFinal,devolucion,apv,ahorr
       items.push({tipo:'success',txt:`Tus retenciones superan el impuesto proyectado. El SII te devolvería <strong>${fmt(devolucion)}</strong> en la operación renta de abril.`});
     if(guardarMes>0)
       items.push({tipo:'info',txt:`Guarda <strong>${fmt(guardarMes)} al mes</strong> durante los próximos ${mesesRest} meses para cubrir impuestos y cotizaciones en abril sin sorpresas.`});
+    // Aviso honorarios sin retención
+    const sinRetTot=mesesActuales.reduce((s,m)=>s+(m.retencion===0&&m.bruto>0?m.bruto:0),0);
+    if(sinRetTot>0)
+      items.push({tipo:'warning',txt:`<strong>${fmt(sinRetTot)}</strong> en honorarios no tuvieron retención de ningún pagador. Esa renta tributa íntegramente en abril — considera provisionarla mes a mes.`});
     const tramoInfo=getTramo(rentaAnual);
     if(tramoInfo.siguiente&&tramoInfo.siguiente.h!==Infinity){
       const dist=tramoInfo.siguiente.d-rentaAnual;
@@ -751,6 +810,26 @@ function renderTakeaways(rentaAnual,retenidoActual,impFinal,devolucion,apv,ahorr
     items.push({tipo:'info',txt:`Declaración de renta: <strong>abril ${anio+1}</strong>. Plazo APV: <strong>31 de diciembre ${anio}</strong>.`});
   }
   document.getElementById('takeaways').innerHTML=items.map(item=>`<div class="alerta ${item.tipo}">${item.txt}</div>`).join('');
+}
+
+// ── Card opcional Tab ① ───────────────────────────
+function toggleOpcionales(){
+  const body=document.getElementById('opcionales-body');
+  const chevron=document.getElementById('opcionales-chevron');
+  const visible=body.style.display!=='none';
+  body.style.display=visible?'none':'block';
+  chevron.textContent=visible?'+':'−';
+}
+
+function updateOpcionales(){
+  cotizacionesPagadas=Math.max(0,+(document.getElementById('cot-pagadas-input')?.value||0));
+  apvYaDepositado=Math.max(0,+(document.getElementById('apv-depositado-input')?.value||0));
+  // Pre-llenar el input APV de Tab ② si el usuario no lo ha tocado o está en 0
+  const apvInput=document.getElementById('apv-input');
+  if(apvInput&&apvYaDepositado>0&&+(apvInput.value||0)===0){
+    apvInput.value=apvYaDepositado;
+  }
+  recalcular();
 }
 
 // ── Régimen APV ───────────────────────────────────
@@ -778,12 +857,13 @@ function recalcular(){
   const bonusAPV=apvRegimen==='A'?Math.min(apv*0.15,bonusCap):0;
   const basePrevisional=BASE_PREVISIONAL[anio]??1.00;
   const cotizaciones=Math.round(rentaAnual*basePrevisional*0.17);
+  const cotizacionesPend=Math.max(0,cotizaciones-cotizacionesPagadas); // pendiente para abril
   // Saldo base: sin APV → es lo que muestra el hero (tu situación real sin intervención)
-  const saldoBase=retenidoActual-impSinAPV-cotizaciones;
+  const saldoBase=retenidoActual-impSinAPV-cotizacionesPend;
   const devolucionBase=Math.max(0,saldoBase);
   const deudaBase=Math.max(0,-saldoBase);
   // Saldo con APV → solo para mostrar el impacto dentro del simulador, no en el hero
-  const saldoConAPV=retenidoActual-impConAPV-cotizaciones;
+  const saldoConAPV=retenidoActual-impConAPV-cotizacionesPend;
   const mesesRest=esPasado?0:(11-mesActual);
   const guardarMes=mesesRest>0&&deudaBase>0?Math.round(deudaBase/mesesRest):0;
 
@@ -813,6 +893,15 @@ function recalcular(){
   rImp.textContent=fmt(impConAPV);
   rImp.className='metric-value'+(impConAPV>0?' danger':'');
   document.getElementById('r-cot').textContent=fmt(cotizaciones);
+  const rCotSub=document.getElementById('r-cot-sub');
+  if(rCotSub){
+    if(cotizacionesPagadas>0){
+      const color=cotizacionesPend>0?'var(--warning)':'var(--success)';
+      rCotSub.innerHTML=`Ya pagado: ${fmt(cotizacionesPagadas)} · <span style="color:${color}">Abril: ${fmt(cotizacionesPend)}</span>`;
+    } else {
+      rCotSub.textContent='';
+    }
+  }
 
   // APV card: contexto dinámico según régimen y año cerrado/en curso
   const tramos=TRAMOS_POR_ANIO[anio]||TRAMOS_POR_ANIO[2025];
