@@ -270,23 +270,27 @@ input[type=number]:focus{border-color:var(--accent)}
       <!-- Alerta sin retención (solo XLS) -->
       <div id="alerta-sinret" style="display:none;margin-bottom:1rem"></div>
 
-      <!-- Card opcional: cotizaciones pagadas + APV ya depositado -->
+      <!-- Card cotizaciones: siempre visible, cambia el resultado de abril -->
+      <div class="card" style="margin-bottom:1rem">
+        <p class="card-label">Cotizaciones AFP + Salud</p>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:0.75rem;line-height:1.5">¿Pagaste AFP y salud directamente cada mes, o lo harás todo en abril junto al impuesto?</p>
+        <div class="toggle-wrap">
+          <button class="toggle-btn active" id="tog-cot-pendiente" onclick="setCotizacionesModo('pendiente')">Las pagaré en abril</button>
+          <button class="toggle-btn" id="tog-cot-pagadas" onclick="setCotizacionesModo('pagadas')">Ya las pagué mes a mes</button>
+        </div>
+        <p id="cot-modo-hint" style="font-size:12px;color:var(--muted);margin-top:0.5rem;line-height:1.5"></p>
+      </div>
+
+      <!-- Card APV: opcional / colapsable -->
       <div class="card" style="margin-bottom:1rem">
         <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer" onclick="toggleOpcionales()">
-          <p class="card-label" style="margin:0">Datos adicionales <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:11px;color:var(--muted)">· opcional</span></p>
+          <p class="card-label" style="margin:0">APV ya depositado <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:11px;color:var(--muted)">· opcional</span></p>
           <span id="opcionales-chevron" style="color:var(--muted);font-size:18px;line-height:1;font-weight:300">+</span>
         </div>
-        <div id="opcionales-body" style="display:none;margin-top:1rem;display:none">
-          <div class="avg-input-wrap" style="margin-bottom:0.9rem">
-            <div>
-              <label style="display:block;font-size:13px;color:var(--muted);margin-bottom:2px">Cotizaciones ya pagadas este año</label>
-              <span style="font-size:11px;color:var(--muted)">AFP + salud, pagos directos (no via SII)</span>
-            </div>
-            <input type="number" id="cot-pagadas-input" placeholder="0" min="0" step="50000" oninput="updateOpcionales()"/>
-          </div>
+        <div id="opcionales-body" style="display:none;margin-top:1rem">
           <div class="avg-input-wrap">
             <div>
-              <label style="display:block;font-size:13px;color:var(--muted);margin-bottom:2px">APV ya depositado este año</label>
+              <label style="display:block;font-size:13px;color:var(--muted);margin-bottom:2px">Monto ya depositado en APV este año</label>
               <span style="font-size:11px;color:var(--muted)">Se pre-llena en el simulador de Tab ②</span>
             </div>
             <input type="number" id="apv-depositado-input" placeholder="0" min="0" step="100000" oninput="updateOpcionales()"/>
@@ -415,7 +419,7 @@ let mesActual     = new Date().getMonth();
 let esPasado      = false;
 let dataSource    = null;
 let apvRegimen        = 'A';  // 'A' = bono estado 15% | 'B' = deducción pura sin bono
-let cotizacionesPagadas = 0;  // cotizaciones AFP+salud ya pagadas directamente en el año
+let cotizacionesModo    = 'pendiente'; // 'pendiente' = se pagan en abril | 'pagadas' = ya pagadas mes a mes
 let apvYaDepositado     = 0;  // APV ya depositado este año (pre-llena Tab ②)
 
 // ── Helpers ───────────────────────────────────────
@@ -640,12 +644,18 @@ function resetUpload(){
   document.getElementById('year-pill').style.display='none';
   document.getElementById('file-input').value='';
   document.getElementById('extras-ingresos').style.display='none';
-  // Limpiar campos opcionales y estado derivado
-  const cotInput=document.getElementById('cot-pagadas-input');
+  // Limpiar estado y UI de cards opcionales
   const apvDep=document.getElementById('apv-depositado-input');
-  if(cotInput) cotInput.value='';
   if(apvDep) apvDep.value='';
-  cotizacionesPagadas=0; apvYaDepositado=0;
+  apvYaDepositado=0;
+  // Resetear toggle cotizaciones a "pendiente"
+  cotizacionesModo='pendiente';
+  const togPend=document.getElementById('tog-cot-pendiente');
+  const togPag=document.getElementById('tog-cot-pagadas');
+  if(togPend) togPend.className='toggle-btn active';
+  if(togPag) togPag.className='toggle-btn';
+  const cotHint=document.getElementById('cot-modo-hint');
+  if(cotHint) cotHint.textContent='';
   hideUploadError(); recalcular();
 }
 
@@ -812,7 +822,23 @@ function renderTakeaways(rentaAnual,retenidoActual,impFinal,devolucion,apv,ahorr
   document.getElementById('takeaways').innerHTML=items.map(item=>`<div class="alerta ${item.tipo}">${item.txt}</div>`).join('');
 }
 
-// ── Card opcional Tab ① ───────────────────────────
+// ── Card cotizaciones Tab ① ───────────────────────
+function setCotizacionesModo(modo){
+  cotizacionesModo=modo;
+  document.getElementById('tog-cot-pendiente').className='toggle-btn'+(modo==='pendiente'?' active':'');
+  document.getElementById('tog-cot-pagadas').className='toggle-btn'+(modo==='pagadas'?' active':'');
+  const hint=document.getElementById('cot-modo-hint');
+  if(hint){
+    if(modo==='pagadas'){
+      hint.innerHTML='<span style="color:var(--success)">✓ Las cotizaciones no se incluyen en tu deuda de abril — ya están cubiertas.</span>';
+    } else {
+      hint.textContent='Las cotizaciones se pagarán en abril junto al impuesto a la renta.';
+    }
+  }
+  recalcular();
+}
+
+// ── Card APV opcional Tab ① ───────────────────────
 function toggleOpcionales(){
   const body=document.getElementById('opcionales-body');
   const chevron=document.getElementById('opcionales-chevron');
@@ -822,9 +848,8 @@ function toggleOpcionales(){
 }
 
 function updateOpcionales(){
-  cotizacionesPagadas=Math.max(0,+(document.getElementById('cot-pagadas-input')?.value||0));
   apvYaDepositado=Math.max(0,+(document.getElementById('apv-depositado-input')?.value||0));
-  // Pre-llenar el input APV de Tab ② si el usuario no lo ha tocado o está en 0
+  // Pre-llenar el input APV de Tab ② si aún está en 0
   const apvInput=document.getElementById('apv-input');
   if(apvInput&&apvYaDepositado>0&&+(apvInput.value||0)===0){
     apvInput.value=apvYaDepositado;
@@ -857,7 +882,7 @@ function recalcular(){
   const bonusAPV=apvRegimen==='A'?Math.min(apv*0.15,bonusCap):0;
   const basePrevisional=BASE_PREVISIONAL[anio]??1.00;
   const cotizaciones=Math.round(rentaAnual*basePrevisional*0.17);
-  const cotizacionesPend=Math.max(0,cotizaciones-cotizacionesPagadas); // pendiente para abril
+  const cotizacionesPend=cotizacionesModo==='pagadas'?0:cotizaciones; // pendiente para abril
   // Saldo base: sin APV → es lo que muestra el hero (tu situación real sin intervención)
   const saldoBase=retenidoActual-impSinAPV-cotizacionesPend;
   const devolucionBase=Math.max(0,saldoBase);
@@ -895,9 +920,8 @@ function recalcular(){
   document.getElementById('r-cot').textContent=fmt(cotizaciones);
   const rCotSub=document.getElementById('r-cot-sub');
   if(rCotSub){
-    if(cotizacionesPagadas>0){
-      const color=cotizacionesPend>0?'var(--warning)':'var(--success)';
-      rCotSub.innerHTML=`Ya pagado: ${fmt(cotizacionesPagadas)} · <span style="color:${color}">Abril: ${fmt(cotizacionesPend)}</span>`;
+    if(cotizacionesModo==='pagadas'){
+      rCotSub.innerHTML=`<span style="color:var(--success)">✓ ya pagadas mes a mes · no se deben en abril</span>`;
     } else {
       rCotSub.textContent='';
     }
